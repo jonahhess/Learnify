@@ -1,4 +1,4 @@
-const API = import.meta.env.VITE_API_BASE_URL;
+const API = import.meta.env.VITE_API_BASE_URL || "http://localhost:4000";
 
 async function jsonFetch(url, options = {}) {
   const res = await fetch(url, {
@@ -26,15 +26,9 @@ export function login({ email, password }) {
 }
 
 export async function getMe() {
-  const res = await jsonFetch("/api/me", {
+  return jsonFetch(`${API}/users/me`, {
     method: "GET",
   });
-
-  if (!res.ok) {
-    throw new Error("Not authenticated");
-  }
-
-  return res.json();
 }
 
 export { jsonFetch };
