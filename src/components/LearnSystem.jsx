@@ -1,20 +1,10 @@
 import { useEffect, useState } from "react";
-import {
-  Container,
-  Title,
-  Loader,
-  Center,
-  Button,
-  Group,
-  List,
-  ListItem,
-} from "@mantine/core";
+import { Container, Title, Loader, Center, Button, Group } from "@mantine/core";
 import { useAuth } from "../context/AuthContext.jsx";
 import CourseList from "./CourseList.jsx";
 import CoursewarePage from "./CoursewarePage.jsx";
 import { getCourses, getCoursewares } from "../api/courses.js";
 import { generateCoursewareFromTitle } from "../api/ai.js";
-import { IconCircleCheck } from "@tabler/icons-react";
 
 export default function LearnSystem() {
   const { user } = useAuth();
