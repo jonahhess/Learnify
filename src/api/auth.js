@@ -26,12 +26,8 @@ export function login({ email, password }) {
 }
 
 export async function getMe() {
-  const res = await fetch("/api/me", {
+  const res = await jsonFetch("/api/me", {
     method: "GET",
-    credentials: "include",
-    headers: {
-      "Content-Type": "application/json",
-    },
   });
 
   if (!res.ok) {
