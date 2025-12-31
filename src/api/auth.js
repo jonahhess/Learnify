@@ -25,4 +25,20 @@ export function login({ email, password }) {
   });
 }
 
+export async function getMe() {
+  const res = await fetch("/api/me", {
+    method: "GET",
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+
+  if (!res.ok) {
+    throw new Error("Not authenticated");
+  }
+
+  return res.json();
+}
+
 export { jsonFetch };

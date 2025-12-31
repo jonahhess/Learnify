@@ -1,32 +1,33 @@
-import { createContext, useContext, useState, useEffect } from "react";
-import { getUserById } from "../api/users";
+import { createContext, useContext, useState } from "react";
+import { getMe } from "../api/auth";
 
 const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
-
-  function onLoggedIn(userData) {
-    localStorage.setItem("user", JSON.stringify(userData));
-    setUser(userData);
-  }
-
-  function onLoggedOut() {
-    localStorage.removeItem("user");
-    setUser(null);
-  }
+  const [loading, setLoading] = useState(true);
 
   async function reloadUser() {
     try {
-      const freshUser = await getUserById(user._id);
-      setUser(freshUser);
-    } catch (err) {
-      console.error("Failed to reload user:", err);
+      const me = await getMe();
+      setUser(me);
+    } catch {
+      setUser(null);
+    } finally {
+      setLoading(false);
     }
   }
 
+  useEffect(() => {
+    reloadUser();
+  }, []);
+
+  function onLoggedOut() {
+    setUser(null);
+  }
+
   return (
-    <AuthContext.Provider value={{ user, onLoggedIn, onLoggedOut, reloadUser }}>
+    <AuthContext.Provider value={{ user, loading, reloadUser, onLoggedOut }}>
       {children}
     </AuthContext.Provider>
   );
