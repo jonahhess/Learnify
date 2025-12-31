@@ -26,7 +26,6 @@ import {
 
 export default function Login() {
   const nav = useNavigate();
-  const { onLoggedIn } = useAuth();
   const [loading, setLoading] = useState(false);
 
   const form = useForm({
