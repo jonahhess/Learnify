@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useLocation, useNavigate } from "react-router-dom";
+import { logout } from "../api/auth.js";
 import {
   Center,
   Stack,
@@ -22,7 +23,7 @@ import {
   IconUserPlus,
 } from "@tabler/icons-react";
 
-import classes from "./Sidebar.module.css"; 
+import classes from "./Sidebar.module.css";
 
 function NavIcon({ icon: Icon, label, onClick, active, color, children }) {
   return (
@@ -47,7 +48,12 @@ export default function Sidebar() {
 
   const isAuthed = !!user;
 
-  function handleLogout() {
+  async function handleLogout() {
+    try {
+      await logout();
+    } catch (err) {
+      console.error("Logout error:", err);
+    }
     onLoggedOut();
     navigate("/login");
   }
@@ -149,8 +155,12 @@ export default function Sidebar() {
 
             <Divider my="sm" />
 
-            <Text size="sm">Enrolled courses: {user.myCurrentCourses?.length || 0}</Text>
-            <Text size="sm">Completed courses: {user.myCompletedCourses?.length || 0}</Text>
+            <Text size="sm">
+              Enrolled courses: {user.myCurrentCourses?.length || 0}
+            </Text>
+            <Text size="sm">
+              Completed courses: {user.myCompletedCourses?.length || 0}
+            </Text>
 
             <Button
               mt="lg"

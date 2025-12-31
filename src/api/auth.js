@@ -6,7 +6,13 @@ async function jsonFetch(url, options = {}) {
     credentials: "include",
     ...options,
   });
-  const data = await res.json().catch(() => ({}));
+  let data;
+  try {
+    data = await res.json();
+  } catch (err) {
+    if (!res.ok) throw new Error("Request failed");
+    data = {};
+  }
   if (!res.ok) throw new Error(data.message || "Request failed");
   return data;
 }
@@ -28,6 +34,12 @@ export function login({ email, password }) {
 export async function getMe() {
   return jsonFetch(`${API}/users/me`, {
     method: "GET",
+  });
+}
+
+export async function logout() {
+  return jsonFetch(`${API}/users/logout`, {
+    method: "POST",
   });
 }
 
