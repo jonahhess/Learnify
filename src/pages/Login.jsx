@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState } from "react";
 import {
   Container,
   Paper,
@@ -11,13 +11,18 @@ import {
   Group,
   Stack,
   Divider,
-} from '@mantine/core';
-import { useForm } from '@mantine/form';
-import { notifications } from '@mantine/notifications';
-import { login } from '../api/auth.js';
-import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext.jsx';
-import { IconMail, IconLock, IconBrandGoogle, IconBrandGithub } from '@tabler/icons-react';
+} from "@mantine/core";
+import { useForm } from "@mantine/form";
+import { notifications } from "@mantine/notifications";
+import { login } from "../api/auth.js";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext.jsx";
+import {
+  IconMail,
+  IconLock,
+  IconBrandGoogle,
+  IconBrandGithub,
+} from "@tabler/icons-react";
 
 export default function Login() {
   const nav = useNavigate();
@@ -25,22 +30,19 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
 
   const form = useForm({
-    initialValues: { email: '', password: '' },
+    initialValues: { email: "", password: "" },
     validate: {
-      email: (v) => (/^\S+@\S+\.\S+$/.test(v) ? null : 'Invalid email'),
-      password: (v) => (!v ? 'Password is required' : null),
+      email: (v) => (/^\S+@\S+\.\S+$/.test(v) ? null : "Invalid email"),
+      password: (v) => (!v ? "Password is required" : null),
     },
   });
 
   const handleSubmit = form.onSubmit(async (values) => {
     try {
       setLoading(true);
-      const data = await login(values); 
-      console.log(data)
+      await login(values);
       notifications.show({ message: "Welcome back! ✅" });
-
-      onLoggedIn(data.user);
-
+      await reloadUser();
       nav("/");
     } catch (e) {
       notifications.show({ color: "red", message: e.message });
@@ -50,11 +52,20 @@ export default function Login() {
   });
 
   return (
-    <Container size={420} style={{ minHeight: '100vh', display: 'flex', alignItems: 'center' }}>
-      <Paper withBorder shadow="xl" radius="lg" p="xl" style={{ width: '100%' }}>
+    <Container
+      size={420}
+      style={{ minHeight: "100vh", display: "flex", alignItems: "center" }}
+    >
+      <Paper
+        withBorder
+        shadow="xl"
+        radius="lg"
+        p="xl"
+        style={{ width: "100%" }}
+      >
         {/* Header */}
         <Stack align="center" mb="lg">
-          <Title order={2} style={{ fontWeight: 800, color: '#1c7ed6' }}>
+          <Title order={2} style={{ fontWeight: 800, color: "#1c7ed6" }}>
             Welcome back 👋
           </Title>
           <Text c="dimmed" size="sm">
@@ -68,7 +79,7 @@ export default function Login() {
             leftSection={<IconMail size={18} />}
             label="Email"
             placeholder="you@learnify.com"
-            {...form.getInputProps('email')}
+            {...form.getInputProps("email")}
             required
             mb="sm"
           />
@@ -76,7 +87,7 @@ export default function Login() {
             leftSection={<IconLock size={18} />}
             label="Password"
             placeholder="••••••••"
-            {...form.getInputProps('password')}
+            {...form.getInputProps("password")}
             required
             mb="md"
           />
@@ -88,7 +99,7 @@ export default function Login() {
             radius="md"
             size="md"
             variant="gradient"
-            gradient={{ from: 'indigo', to: 'cyan' }}
+            gradient={{ from: "indigo", to: "cyan" }}
             style={{ fontWeight: 600 }}
           >
             Log in
