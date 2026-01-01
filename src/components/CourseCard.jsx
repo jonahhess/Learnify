@@ -8,20 +8,9 @@ export default function CourseCard({ course, coursewares, onClick, isNew }) {
   const [courseTitles, setCourseTitles] = useState([]);
 
   useEffect(() => {
-    async function loadCourseTitles() {
-      try {
-        const validId = course._id || course.courseId;
-        if (!validId) return;
-
-        const data = await getCourseById(validId);
-        setCourseTitles(data.coursewares || []);
-      } catch (err) {
-        console.error("Failed to fetch course titles:", err);
-      }
-    }
-
-    if (!isNew) loadCourseTitles();
-  }, [course._id, course.courseId, isNew]);
+    console.log(course);
+    setCourseTitles(course.coursewares || []);
+  }, []);
 
   const currentCW = (user.myCurrentCoursewares || []).find(
     (cw) => String(cw.courseId) === String(course.courseId)
