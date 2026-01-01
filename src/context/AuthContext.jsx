@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect } from "react";
-import { getMe } from "../api/auth";
+import { getMe, logout } from "../api/auth";
 
 const AuthContext = createContext();
 
@@ -23,6 +23,8 @@ export function AuthProvider({ children }) {
   }, []);
 
   function onLoggedOut() {
+    logout().catch(() => {}); // ignore errors
+    localStorage.removeItem("user");
     setUser(null);
   }
 
