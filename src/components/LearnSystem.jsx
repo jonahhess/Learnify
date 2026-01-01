@@ -139,6 +139,7 @@ export default function LearnSystem() {
             }
             try {
               await startCourse(user._id, selectedNewCourse._id);
+              await reloadUser();
               setShowNewCourses(false);
               setSelectedNewCourse(null);
             } catch (err) {
@@ -171,7 +172,7 @@ export default function LearnSystem() {
         isNew={showNewCourses}
         onSelectCourse={(course) => {
           if (showNewCourses) {
-            const cw = getAvailableCourses().filer(
+            const cw = getAvailableCourses().filter(
               (course) => course._id === selectedCourse
             )?.coursewares;
             setNewCoursewares(cw);
