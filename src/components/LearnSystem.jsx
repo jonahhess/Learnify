@@ -51,6 +51,7 @@ export default function LearnSystem() {
   }
 
   function getCurrentCourses() {
+    console.log(user);
     return user?.myCurrentCourses || [];
   }
 
