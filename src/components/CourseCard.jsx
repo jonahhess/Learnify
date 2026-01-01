@@ -10,6 +10,11 @@ export default function CourseCard({ course, coursewares, onClick, isNew }) {
   useEffect(() => {
     async function loadCourseTitles() {
       try {
+        if (!course.courseId) {
+          console.warn("No courseId provided:", course);
+          return;
+        }
+
         const data = await getCourseById(course.courseId);
         setCourseTitles(data.coursewares || []);
       } catch (err) {
