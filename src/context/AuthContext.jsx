@@ -22,8 +22,12 @@ export function AuthProvider({ children }) {
     reloadUser();
   }, []);
 
-  function onLoggedOut() {
-    logout().catch(() => {}); // ignore errors
+  async function onLoggedOut() {
+    try {
+      await logout(); // call backend
+    } catch (err) {
+      console.error("Failed to call logout API:", err);
+    }
     localStorage.removeItem("user");
     setUser(null);
   }
