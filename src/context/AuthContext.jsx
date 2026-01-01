@@ -8,10 +8,19 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   async function reloadUser() {
+    setLoading(true);
     try {
       const me = await getMe();
-      setUser(me);
-    } catch {
+      if (!me?._id) {
+        setUser(null);
+        return;
+      }
+
+      // Step 2: Fetch full user data
+      const fullUser = await getUserById(me._id);
+      setUser(fullUser);
+    } catch (err) {
+      console.error("Failed to reload user:", err);
       setUser(null);
     } finally {
       setLoading(false);
@@ -21,7 +30,6 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     reloadUser();
   }, []);
-
   async function onLoggedOut() {
     try {
       await logout(); // call backend
