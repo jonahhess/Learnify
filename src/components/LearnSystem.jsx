@@ -59,16 +59,6 @@ export default function LearnSystem() {
     return allCourses.filter((c) => !currentIds.includes(String(c._id)));
   }
 
-  async function getCourseTitles(courseId) {
-    try {
-      const course = await getCourseById(courseId);
-      return course.coursewares || [];
-    } catch (err) {
-      console.error("Failed to fetch course titles:", err);
-      return [];
-    }
-  }
-
   async function handleGenerateCourse() {
     if (!newTitle.trim()) return;
     try {
@@ -149,7 +139,6 @@ export default function LearnSystem() {
             }
             try {
               await startCourse(user._id, selectedNewCourse._id);
-              await reloadUser();
               setShowNewCourses(false);
               setSelectedNewCourse(null);
             } catch (err) {
@@ -180,9 +169,11 @@ export default function LearnSystem() {
         courses={showNewCourses ? getAvailableCourses() : getCurrentCourses()}
         coursewares={coursewares}
         isNew={showNewCourses}
-        onSelectCourse={async (course) => {
+        onSelectCourse={(course) => {
           if (showNewCourses) {
-            const cw = await getCourseTitles(course._id || course.courseId);
+            const cw = getAvailableCourses().filer(
+              (course) => course._id === selectedCourse
+            )?.coursewares;
             setNewCoursewares(cw);
             setSelectedNewCourse(course);
           } else {
