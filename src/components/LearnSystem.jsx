@@ -182,7 +182,7 @@ export default function LearnSystem() {
         isNew={showNewCourses}
         onSelectCourse={async (course) => {
           if (showNewCourses) {
-            const cw = await getCourseTitles(course._id);
+            const cw = await getCourseTitles(course._id || course.courseId);
             setNewCoursewares(cw);
             setSelectedNewCourse(course);
           } else {
