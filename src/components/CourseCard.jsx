@@ -8,7 +8,6 @@ export default function CourseCard({ course, coursewares, onClick, isNew }) {
   const [courseTitles, setCourseTitles] = useState([]);
 
   useEffect(() => {
-    console.log(course);
     setCourseTitles(course.coursewares || []);
   }, []);
 
@@ -33,7 +32,7 @@ export default function CourseCard({ course, coursewares, onClick, isNew }) {
         {course.title}
       </Text>
 
-      {!isNew && (
+      {(!isNew && (
         <>
           {currentCW ? (
             <Text size="sm" c="dimmed" mb="sm">
@@ -46,6 +45,14 @@ export default function CourseCard({ course, coursewares, onClick, isNew }) {
           )}
 
           <Progress value={progress} label={`${progress}%`} />
+        </>
+      )) || (
+        <>
+          {courseTitles.forEach((cw) => {
+            <Text size="sm" c="dimmed" mb="sm">
+              {cw.title}
+            </Text>;
+          })}
         </>
       )}
     </Card>
