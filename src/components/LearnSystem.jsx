@@ -17,26 +17,26 @@ import { startCourse } from "../api/users.js";
 import { generateCourseOutline } from "../api/ai.js";
 
 export default function LearnSystem() {
-  const { user, reloadUser } = useAuth();
+  const { user, loading, reloadUser } = useAuth();
+
   const [allCourses, setAllCourses] = useState([]);
   const [coursewares, setCoursewares] = useState([]);
   const [selectedCourse, setSelectedCourse] = useState(null);
   const [selectedNewCourse, setSelectedNewCourse] = useState(null);
   const [showNewCourses, setShowNewCourses] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [dataLoading, setDataLoading] = useState(true);
   const [newCoursewares, setNewCoursewares] = useState([]);
   const [newTitle, setNewTitle] = useState("");
   const [creating, setCreating] = useState(false);
 
+  // ---- Load courses when user is available ----
   useEffect(() => {
-    if (user) {
-      loadData();
-    }
+    if (user) loadData();
   }, [user]);
 
   async function loadData() {
     try {
-      setLoading(true);
+      setDataLoading(true);
       const [coursesData, coursewaresData] = await Promise.all([
         getCourses(),
         getCoursewares(),
@@ -44,14 +44,19 @@ export default function LearnSystem() {
       setAllCourses(coursesData);
       setCoursewares(coursewaresData);
     } catch (err) {
-      console.error(err);
+      console.error("Failed to load courses:", err);
     } finally {
-      setLoading(false);
+      setDataLoading(false);
     }
   }
 
   function getCurrentCourses() {
-    return user.myCurrentCourses || [];
+    return user?.myCurrentCourses || [];
+  }
+
+  function getAvailableCourses() {
+    const currentIds = getCurrentCourses().map((c) => String(c.courseId));
+    return allCourses.filter((c) => !currentIds.includes(String(c._id)));
   }
 
   async function getCourseTitles(courseId) {
@@ -62,13 +67,6 @@ export default function LearnSystem() {
       console.error("Failed to fetch course titles:", err);
       return [];
     }
-  }
-
-  function getAvailableCourses() {
-    const currentIds = (user.myCurrentCourses || []).map((c) =>
-      String(c.courseId)
-    );
-    return allCourses.filter((c) => !currentIds.includes(String(c._id)));
   }
 
   async function handleGenerateCourse() {
@@ -86,6 +84,17 @@ export default function LearnSystem() {
     }
   }
 
+  // ---- Guard for auth loading ----
+  if (loading || dataLoading) {
+    return (
+      <Center py="xl">
+        <Loader size="lg" />
+        <Title order={3}>Loading...</Title>
+      </Center>
+    );
+  }
+
+  // ---- User not logged in ----
   if (!user) {
     return (
       <Container py="xl">
@@ -94,19 +103,15 @@ export default function LearnSystem() {
     );
   }
 
-  if (loading) {
-    return (
-      <Center py="xl">
-        <Loader size="lg" />
-      </Center>
-    );
-  }
-
   // ---- Current Course Selected ----
   if (selectedCourse) {
     return (
       <Container size="lg" py="xl">
-        <Button variant="subtle" mb="md" onClick={() => setSelectedCourse(null)}>
+        <Button
+          variant="subtle"
+          mb="md"
+          onClick={() => setSelectedCourse(null)}
+        >
           ← Back to Courses
         </Button>
 
@@ -138,6 +143,10 @@ export default function LearnSystem() {
           course={selectedNewCourse}
           coursewares={newCoursewares}
           onStart={async () => {
+            if (!user?._id) {
+              console.error("Cannot start course: user not loaded yet");
+              return;
+            }
             try {
               await startCourse(user._id, selectedNewCourse._id);
               await reloadUser();
@@ -181,7 +190,6 @@ export default function LearnSystem() {
           }
         }}
       />
-
 
       {showNewCourses && (
         <Group mt="lg">
