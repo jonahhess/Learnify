@@ -12,7 +12,8 @@ import {
 import { getQuestionsByCourseware } from "../api/questions.js";
 import { submitCourseware } from "../api/coursewares.js";
 import { useAuth } from "../context/AuthContext.jsx";
-import "./CoursewarePlayer.css"; 
+import "./CoursewarePlayer.css";
+import Markdown from "react-markdown";
 
 const pastelColors = [
   "#f8d7da",
@@ -35,7 +36,7 @@ function buildHighlightedText(text, wrongQuestions, colorMap) {
   if (!wrongQuestions.length) return text;
 
   const sorted = [...wrongQuestions].sort(
-    (a, b) => a.answerStartIndex - b.answerStartIndex
+    (a, b) => a.answerStartIndex - b.answerStartIndex,
   );
 
   const parts = [];
@@ -48,7 +49,7 @@ function buildHighlightedText(text, wrongQuestions, colorMap) {
 
     if (lastIndex < start) {
       parts.push(
-        <span key={`text-${lastIndex}`}>{text.slice(lastIndex, start)}</span>
+        <span key={`text-${lastIndex}`}>{text.slice(lastIndex, start)}</span>,
       );
     }
 
@@ -59,7 +60,7 @@ function buildHighlightedText(text, wrongQuestions, colorMap) {
         style={{ backgroundColor: color }}
       >
         {text.slice(start, end)}
-      </span>
+      </span>,
     );
 
     lastIndex = end;
@@ -176,11 +177,11 @@ export default function CoursewarePlayer({ courseware, onComplete }) {
         {courseware.title}
       </Title>
 
-      <Text mb="lg">
+      <Markdown mb="lg">
         {submitted && wrongQuestions.length > 0
           ? buildHighlightedText(courseware.text, wrongQuestions, colorMap)
           : courseware.text}
-      </Text>
+      </Markdown>
 
       <Title order={4} mb="sm">
         Question {currentQuestion + 1}/{questions.length}
