@@ -173,10 +173,6 @@ export default function CoursewarePlayer({ courseware, onComplete }) {
 
   return (
     <div>
-      <Title order={2} mb="sm">
-        {courseware.title}
-      </Title>
-
       <Markdown mb="lg">
         {submitted && wrongQuestions.length > 0
           ? buildHighlightedText(courseware.text, wrongQuestions, colorMap)
