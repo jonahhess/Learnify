@@ -14,6 +14,9 @@ import { submitCourseware } from "../api/coursewares.js";
 import { useAuth } from "../context/AuthContext.jsx";
 import "./CoursewarePlayer.css";
 import Markdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import rehypeRaw from "rehype-raw";
+import rehypeSanitize, { defaultSchema } from "rehype-sanitize";
 
 const pastelColors = [
   "#f8d7da",
@@ -32,45 +35,46 @@ function shuffleArray(array) {
   return [...array].sort(() => Math.random() - 0.5);
 }
 
-function buildHighlightedText(text, wrongQuestions, colorMap) {
+const markdownSanitizeSchema = {
+  ...defaultSchema,
+  tagNames: [...(defaultSchema.tagNames || []), "mark"],
+  attributes: {
+    ...defaultSchema.attributes,
+    mark: [...(defaultSchema.attributes?.mark || []), "data-qid"],
+  },
+};
+
+function escapeAttribute(value) {
+  return String(value)
+    .replaceAll("&", "&amp;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;");
+}
+
+function buildHighlightedMarkdown(text, wrongQuestions) {
   if (!wrongQuestions.length) return text;
 
   const sorted = [...wrongQuestions].sort(
-    (a, b) => a.answerStartIndex - b.answerStartIndex,
+    (a, b) => b.answerStartIndex - a.answerStartIndex,
   );
 
-  const parts = [];
-  let lastIndex = 0;
+  let highlightedText = text;
 
-  sorted.forEach((q, idx) => {
-    const start = q.answerStartIndex;
-    const end = q.answerEndIndex;
-    const color = colorMap[q._id] || pastelColors[idx % pastelColors.length];
-
-    if (lastIndex < start) {
-      parts.push(
-        <span key={`text-${lastIndex}`}>{text.slice(lastIndex, start)}</span>,
-      );
-    }
-
-    parts.push(
-      <span
-        key={`highlight-${idx}`}
-        className="highlight"
-        style={{ backgroundColor: color }}
-      >
-        {text.slice(start, end)}
-      </span>,
+  sorted.forEach((q) => {
+    const start = Math.max(0, Math.min(text.length, q.answerStartIndex ?? 0));
+    const end = Math.max(
+      start,
+      Math.min(text.length, q.answerEndIndex ?? start),
     );
 
-    lastIndex = end;
+    if (start === end) return;
+
+    const questionId = escapeAttribute(q._id);
+    highlightedText = `${highlightedText.slice(0, start)}<mark data-qid="${questionId}">${highlightedText.slice(start, end)}</mark>${highlightedText.slice(end)}`;
   });
 
-  if (lastIndex < text.length) {
-    parts.push(<span key="end">{text.slice(lastIndex)}</span>);
-  }
-
-  return parts;
+  return highlightedText;
 }
 
 export default function CoursewarePlayer({ courseware, onComplete }) {
@@ -143,7 +147,7 @@ export default function CoursewarePlayer({ courseware, onComplete }) {
     const wrong = [];
     const newColorMap = {};
 
-    questions.forEach((ques, idx) => {
+    questions.forEach((ques) => {
       if (answers[ques._id] === ques.correctAnswer) {
         correctCount++;
       } else {
@@ -171,13 +175,38 @@ export default function CoursewarePlayer({ courseware, onComplete }) {
     onComplete(finalScore >= 80);
   }
 
+  const renderedCoursewareText =
+    submitted && wrongQuestions.length > 0
+      ? buildHighlightedMarkdown(courseware.text, wrongQuestions)
+      : courseware.text;
+
   return (
     <div>
-      <Markdown mb="lg">
-        {submitted && wrongQuestions.length > 0
-          ? buildHighlightedText(courseware.text, wrongQuestions, colorMap)
-          : courseware.text}
-      </Markdown>
+      <div style={{ marginBottom: "1rem" }}>
+        <Markdown
+          remarkPlugins={[remarkGfm]}
+          rehypePlugins={[rehypeRaw, [rehypeSanitize, markdownSanitizeSchema]]}
+          components={{
+            mark: ({ node, ...props }) => {
+              const questionId = node?.properties?.["data-qid"];
+              const color =
+                typeof questionId === "string" && colorMap[questionId]
+                  ? colorMap[questionId]
+                  : "#fff3cd";
+
+              return (
+                <mark
+                  {...props}
+                  className="highlight"
+                  style={{ backgroundColor: color, padding: "0 2px" }}
+                />
+              );
+            },
+          }}
+        >
+          {renderedCoursewareText}
+        </Markdown>
+      </div>
 
       <Title order={4} mb="sm">
         Question {currentQuestion + 1}/{questions.length}
