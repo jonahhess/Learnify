@@ -8,6 +8,7 @@ import {
   Stack,
   Loader,
   Center,
+  Alert,
 } from "@mantine/core";
 import { getQuestionsByCourseware } from "../api/questions.js";
 import { submitCourseware } from "../api/coursewares.js";
@@ -86,7 +87,28 @@ export default function CoursewarePlayer({ courseware, onComplete }) {
   const [score, setScore] = useState(null);
   const [wrongQuestions, setWrongQuestions] = useState([]);
   const [colorMap, setColorMap] = useState({});
+  const [submitError, setSubmitError] = useState("");
+  const [submittingProgress, setSubmittingProgress] = useState(false);
   const { user, reloadUser } = useAuth();
+
+  async function persistCoursewareCompletion() {
+    setSubmitError("");
+    setSubmittingProgress(true);
+
+    try {
+      await submitCourseware(user._id, courseware._id);
+      await reloadUser();
+      onComplete(true);
+    } catch (err) {
+      console.error("Failed to submit courseware:", err);
+      setSubmitError(
+        err?.message ||
+          "We could not save your courseware progress. Please try again.",
+      );
+    } finally {
+      setSubmittingProgress(false);
+    }
+  }
 
   useEffect(() => {
     async function load() {
@@ -141,6 +163,7 @@ export default function CoursewarePlayer({ courseware, onComplete }) {
   }
 
   async function handleSubmit() {
+    setSubmitError("");
     setSubmitted(true);
 
     let correctCount = 0;
@@ -163,16 +186,11 @@ export default function CoursewarePlayer({ courseware, onComplete }) {
     setColorMap(newColorMap);
 
     if (finalScore >= 80) {
-      try {
-        await submitCourseware(user._id, courseware._id);
-        await reloadUser();
-        console.log("Courseware submitted successfully");
-      } catch (err) {
-        console.error("Failed to submit courseware:", err);
-      }
+      await persistCoursewareCompletion();
+      return;
     }
 
-    onComplete(finalScore >= 80);
+    onComplete(false);
   }
 
   const renderedCoursewareText =
@@ -275,6 +293,22 @@ export default function CoursewarePlayer({ courseware, onComplete }) {
             <Text c="green">Congratulations! You passed this courseware.</Text>
           ) : (
             <Text c="red">You did not pass. Try again!</Text>
+          )}
+
+          {submitError && (
+            <Alert color="red" mt="md" title="Could not save progress">
+              {submitError}
+            </Alert>
+          )}
+
+          {score >= 80 && submitError && (
+            <Button
+              mt="md"
+              onClick={persistCoursewareCompletion}
+              loading={submittingProgress}
+            >
+              Retry Save Progress
+            </Button>
           )}
         </div>
       )}
