@@ -8,18 +8,14 @@ import { useAuth } from "../context/AuthContext";
 export default function Review() {
   const [cards, setCards] = useState([]);
   const [results, setResults] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const { user, reloadUser } = useAuth();
-  
+  const { user, loading: authLoading, reloadUser } = useAuth();
+
   useEffect(() => {
     reloadUser();
   }, []);
 
   useEffect(() => {
-    if (user?.myReviewCards) {
-      setCards(user.myReviewCards);
-      setLoading(false);
-    }
+    setCards(user?.myReviewCards ?? []);
   }, [user]);
 
   const handleAnswered = (result) => {
@@ -38,18 +34,18 @@ export default function Review() {
     }
   };
 
-  if (!user) {
+  if (authLoading) {
     return (
-      <Container py="xl">
-        <Title order={2}>Please log in to access your review cards.</Title>
+      <Container size="lg" py="xl">
+        <Loader />
       </Container>
     );
   }
 
-  if (loading) {
+  if (!user) {
     return (
-      <Container size="lg" py="xl">
-        <Loader />
+      <Container py="xl">
+        <Title order={2}>Please log in to access your review cards.</Title>
       </Container>
     );
   }
