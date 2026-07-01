@@ -75,7 +75,7 @@ export default function LearnSystem() {
   }
 
   // ---- Guard for auth loading ----
-  if (loading || dataLoading) {
+  if (loading || (user && dataLoading)) {
     return (
       <Center py="xl">
         <Loader size="lg" />
@@ -108,7 +108,7 @@ export default function LearnSystem() {
         <CoursePage
           course={selectedCourse}
           coursewares={coursewares.filter(
-            (cw) => String(cw.courseId) === String(selectedCourse.courseId)
+            (cw) => String(cw.courseId) === String(selectedCourse.courseId),
           )}
           user={user}
           updateUser={reloadUser}
@@ -173,7 +173,7 @@ export default function LearnSystem() {
         onSelectCourse={(course) => {
           if (showNewCourses) {
             const cw = getAvailableCourses().filter(
-              (course) => course._id === selectedCourse
+              (course) => course._id === selectedCourse,
             )?.coursewares;
             setNewCoursewares(cw);
             setSelectedNewCourse(course);
