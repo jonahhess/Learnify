@@ -52,7 +52,7 @@ export default function ReviewCard({ card, onAnswered }) {
                   },
                   inner: {
                     whiteSpace: "normal",
-                    textAlign: "left",
+                    textAlign: "center",
                   },
                   label: {
                     whiteSpace: "normal",
