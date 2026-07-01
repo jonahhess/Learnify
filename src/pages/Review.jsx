@@ -66,7 +66,7 @@ export default function Review() {
 
   return (
     <Container size="lg" py="xl">
-      <Title order={2} mb="lg">
+      <Title order={2} mb="lg" st>
         Review
       </Title>
       <Stack>

@@ -35,7 +35,9 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: background-color 0.15s ease, color 0.15s ease;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
 }
 
 .link:hover {
@@ -46,4 +48,30 @@
 .link[data-active] {
   background-color: var(--mantine-color-blue-light);
   color: var(--mantine-color-blue-filled);
+}
+
+@media (max-width: 48em) {
+  .navbar {
+    width: 100%;
+    height: 64px;
+    margin-bottom: 12px;
+    padding: 0 var(--mantine-spacing-md);
+    flex-direction: row;
+    align-items: center;
+    border-right: 0;
+    border-bottom: 1px solid var(--mantine-color-default-border);
+  }
+
+  .navbarMain {
+    flex: 1;
+    justify-content: center;
+  }
+
+  .navbarMain :global(.mantine-Stack-root) {
+    flex-direction: row;
+  }
+
+  .navbar > :global(.mantine-Stack-root) {
+    flex-direction: row;
+  }
 }
