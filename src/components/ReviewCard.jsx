@@ -26,11 +26,7 @@ export default function ReviewCard({ card, onAnswered }) {
       radius="md"
       withBorder
       style={{
-        backgroundColor: answered
-          ? correct
-            ? "#d4edda"
-            : "#f8d7da"
-          : "white",
+        backgroundColor: answered ? (correct ? "#d4edda" : "#f8d7da") : "white",
         transition: "background-color 0.3s ease",
       }}
     >
@@ -50,6 +46,18 @@ export default function ReviewCard({ card, onAnswered }) {
                 onClick={() => handleAnswer(ans)}
                 variant="light"
                 w="100%"
+                styles={{
+                  root: {
+                    flexWrap: "wrap",
+                  },
+                  inner: {
+                    whiteSpace: "normal",
+                    textAlign: "left",
+                  },
+                  label: {
+                    whiteSpace: "normal",
+                  },
+                }}
               >
                 {ans}
               </Button>
