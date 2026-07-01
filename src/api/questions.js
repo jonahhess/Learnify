@@ -1,9 +1,8 @@
 import { jsonFetch } from "./auth.js";
-
-const API = import.meta.env.VITE_API_BASE_URL || "http://localhost:4000";
+import { API_BASE_URL } from "./baseUrl.js";
 
 export function getQuestionsByCourseware(coursewareId) {
-  return jsonFetch(`${API}/questions/courseware/${coursewareId}`, {
+  return jsonFetch(`${API_BASE_URL}/questions/courseware/${coursewareId}`, {
     method: "GET",
     cache: "no-store",
   });

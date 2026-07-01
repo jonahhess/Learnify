@@ -1,22 +1,21 @@
 import { jsonFetch } from "./auth.js";
-
-const API = import.meta.env.VITE_API_BASE_URL || "http://localhost:4000";
+import { API_BASE_URL } from "./baseUrl.js";
 
 export function getReviewCards() {
-  return jsonFetch(`${API}/review-cards`, { method: "GET" });
+  return jsonFetch(`${API_BASE_URL}/review-cards`, { method: "GET" });
 }
 
 export function getReviewCardById(id) {
-  return jsonFetch(`${API}/review-cards/${id}`, { method: "GET" });
+  return jsonFetch(`${API_BASE_URL}/review-cards/${id}`, { method: "GET" });
 }
 
 export function updateReviewCard(id, success) {
-  return jsonFetch(`${API}/review-cards/${id}`, {
+  return jsonFetch(`${API_BASE_URL}/review-cards/${id}`, {
     method: "PUT",
     body: JSON.stringify({ success }),
   });
 }
 
 export function deleteReviewCard(id) {
-  return jsonFetch(`${API}/review-cards/${id}`, { method: "DELETE" });
+  return jsonFetch(`${API_BASE_URL}/review-cards/${id}`, { method: "DELETE" });
 }
