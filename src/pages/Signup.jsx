@@ -44,7 +44,7 @@ export default function Signup() {
   });
 
   return (
-    <Container size="xs" py="xl">
+    <Container size="xs" py="xl" mt="40px">
       <Paper withBorder shadow="sm" p="lg" radius="md">
         <Title order={2} mb="md">
           Create your account

@@ -44,7 +44,7 @@ export default function Review() {
 
   if (!user) {
     return (
-      <Container py="xl">
+      <Container py="xl" mt="40px">
         <Title order={2}>Please log in to access your review cards.</Title>
       </Container>
     );

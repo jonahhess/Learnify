@@ -66,7 +66,7 @@ export default function Sidebar() {
             { icon: IconChartBar, label: "Review", to: "/review" },
           ]
         : [],
-    [isAuthed]
+    [isAuthed],
   );
 
   return (
