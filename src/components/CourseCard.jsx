@@ -7,9 +7,9 @@ export default function CourseCard({ course, coursewares, onClick, isNew }) {
   const { user } = useAuth();
   const [courseTitles, setCourseTitles] = useState([]);
 
-  useEffect(() => {
-    setCourseTitles(course.coursewares || []);
-  }, []);
+  const courseTitles = Array.isArray(course?.coursewares)
+    ? course.coursewares
+    : [];
 
   const lastCW = (user.myCompletedCourses || []).findLast(
     (cw) => String(cw.courseId) === String(course.courseId),
