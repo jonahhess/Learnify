@@ -1,12 +1,9 @@
-import { useState, useEffect } from "react";
 import { Card, Text, Progress } from "@mantine/core";
 import { useAuth } from "../context/AuthContext.jsx";
 import { getCourseById } from "../api/courses.js";
 
 export default function CourseCard({ course, coursewares, onClick, isNew }) {
   const { user } = useAuth();
-  const [courseTitles, setCourseTitles] = useState([]);
-
   const courseTitles = Array.isArray(course?.coursewares)
     ? course.coursewares
     : [];
