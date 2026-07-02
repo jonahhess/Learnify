@@ -8,6 +8,7 @@
   background: var(--mantine-color-body);
   border-right: 1px solid var(--mantine-color-default-border);
   background-color: white;
+  z-index: 1;
 }
 
 .brand {
