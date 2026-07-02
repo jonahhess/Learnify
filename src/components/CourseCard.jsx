@@ -11,12 +11,15 @@ export default function CourseCard({ course, coursewares, onClick, isNew }) {
     setCourseTitles(course.coursewares || []);
   }, []);
 
+  const lastCW = (user.myCompletedCourses || []).findLast(
+    (cw) => String(cw.courseId) === String(course.courseId),
+  );
   const currentCW = (user.myCurrentCoursewares || []).find(
-    (cw) => String(cw.courseId) === String(course.courseId)
+    (cw) => String(cw.courseId) === String(course.courseId),
   );
 
   const total = courseTitles.length;
-  const index = currentCW ? currentCW.index : 0;
+  const index = lastCW ? lastCW.index : 0;
   const progress = Math.round((index / total) * 100);
 
   return (
@@ -34,16 +37,9 @@ export default function CourseCard({ course, coursewares, onClick, isNew }) {
 
       {(!isNew && (
         <>
-          {currentCW ? (
-            <Text size="sm" c="dimmed" mb="sm">
-              Lesson {index + 1}: {currentCW.title}
-            </Text>
-          ) : (
-            <Text size="sm" c="dimmed" mb="sm">
-              Generate new courseware
-            </Text>
-          )}
-
+          <Text size="sm" c="dimmed" mb="sm">
+            Lesson {index + 1}: {currentCW?.title || courseTitles[index + 1]}
+          </Text>
           <Progress value={progress} label={`${progress}%`} />
         </>
       )) || (
