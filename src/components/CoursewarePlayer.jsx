@@ -11,7 +11,7 @@ import {
   Alert,
 } from "@mantine/core";
 import { getQuestionsByCourseware } from "../api/questions.js";
-import { submitCourseware } from "../api/coursewares.js";
+import { startCourseware, submitCourseware } from "../api/coursewares.js";
 import { useAuth } from "../context/AuthContext.jsx";
 import "./CoursewarePlayer.css";
 import Markdown from "react-markdown";
@@ -114,6 +114,7 @@ export default function CoursewarePlayer({ courseware, onComplete }) {
     async function load() {
       try {
         setLoading(true);
+        startCourseware(user._id, courseware._id);
         const data = await getQuestionsByCourseware(courseware._id);
 
         const withOptions = data.map((q) => ({
