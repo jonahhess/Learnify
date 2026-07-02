@@ -38,7 +38,8 @@ export default function CourseCard({ course, coursewares, onClick, isNew }) {
       {(!isNew && (
         <>
           <Text size="sm" c="dimmed" mb="sm">
-            Lesson {index + 1}: {currentCW?.title || courseTitles[index + 1]}
+            Lesson {index + 1}:{" "}
+            {currentCW?.title || courseTitles[index + 1].title}
           </Text>
           <Progress value={progress} label={`${progress}%`} />
         </>
