@@ -36,7 +36,7 @@ export default function Review() {
 
   if (authLoading) {
     return (
-      <Container size="lg" py="xl">
+      <Container size="lg" py="xl" mt="40px">
         <Loader />
       </Container>
     );
@@ -52,7 +52,7 @@ export default function Review() {
 
   if (!cards.length) {
     return (
-      <Container size="lg" py="xl">
+      <Container size="lg" py="xl" mt="40px">
         <Title order={2}>Review</Title>
         <Text c="dimmed">No review cards due today 🎉</Text>
         {results.length > 0 && (
