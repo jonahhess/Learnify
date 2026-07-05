@@ -3,59 +3,84 @@ import { Container, Title, Text, Stack, Button } from "@mantine/core";
 import CoursewarePlayer from "./CoursewarePlayer.jsx";
 import CourseSummary from "./CourseSummary.jsx";
 import CoursewareList from "./CoursewareList.jsx";
+import { startCourseware } from "../api/coursewares.js";
 
-export default function CoursePage({ course, coursewares, user, updateUser }) {
+export default function CoursePage({ course, user, updateUser }) {
   const [selectedCourseware, setSelectedCourseware] = useState(null);
-  const [finished, setFinished] = useState(false);
+  const availableCoursewares = course?.coursewares || [];
 
-  // currentIndex = from user progress
-  const currentCW = (user.myCurrentCoursewares || []).find(
-    (cw) => String(cw.courseId) === String(course.courseId)
+  function getId(value) {
+    return String(value?.coursewareId ?? value?._id ?? value?.id ?? "");
+  }
+
+  function getCourseId(value) {
+    return String(value?.courseId ?? value?._id ?? value?.id ?? "");
+  }
+
+  const courseId = getCourseId(course);
+
+  const completedIds = new Set(
+    (user?.myCompletedCoursewares || [])
+      .filter((cw) => {
+        const cwCourseId = getCourseId(cw);
+        return !cwCourseId || cwCourseId === courseId;
+      })
+      .map(getId),
   );
-  const currentIndex = currentCW ? currentCW.index : 0;
+
+  const currentIds = new Set(
+    (user?.myCurrentCoursewares || [])
+      .filter((cw) => {
+        const cwCourseId = getCourseId(cw);
+        return !cwCourseId || cwCourseId === courseId;
+      })
+      .map(getId),
+  );
+
+  if (currentIds.size === 0 && availableCoursewares.length > 0) {
+    currentIds.add(getId(availableCoursewares[0]));
+  }
+
+  const completedCount = availableCoursewares.filter((cw) =>
+    completedIds.has(getId(cw)),
+  ).length;
+  const allCompleted =
+    availableCoursewares.length > 0 &&
+    completedCount === availableCoursewares.length;
+
+  const statusById = availableCoursewares.reduce((acc, cw) => {
+    const id = getId(cw);
+
+    if (completedIds.has(id)) {
+      acc[id] = "completed";
+    } else if (currentIds.has(id)) {
+      acc[id] = "current";
+    } else {
+      acc[id] = "available";
+    }
+
+    return acc;
+  }, {});
 
   function handleComplete(passed) {
     if (!passed) return;
-
-    const completedCW = {
-      courseId: selectedCourseware.courseId,
-      coursewareId: selectedCourseware.coursewareId,
-      title: selectedCourseware.title,
-    };
-
-    const updatedUser = { ...user };
-
-    updatedUser.myCompletedCoursewares = [
-      ...(user.myCompletedCoursewares || []),
-      completedCW,
-    ];
-
-    updatedUser.myCurrentCoursewares = (user.myCurrentCoursewares || []).filter(
-      (cw) => cw.coursewareId !== selectedCourseware.coursewareId
-    );
-
-    const currentIndex = coursewares.findIndex(
-      (cw) => cw.coursewareId === selectedCourseware.coursewareId
-    );
-    const nextCW = coursewares[currentIndex + 1];
-
-    if (nextCW) {
-      updatedUser.myCurrentCoursewares.push({
-        courseId: nextCW.courseId,
-        coursewareId: nextCW.coursewareId,
-        title: nextCW.title,
-        index: nextCW.index,
-      });
-      setSelectedCourseware(nextCW);
-    } else {
-      setFinished(true);
-    }
-
-    updateUser(updatedUser);
+    setSelectedCourseware(null);
+    updateUser();
   }
 
-  if (finished) {
-    return <CourseSummary course={course} coursewares={coursewares} />;
+  async function handleSelectCourseware(courseware) {
+    const coursewareId = courseware?.coursewareId || courseware?._id;
+    const status = statusById[getId(courseware)];
+
+    if (user?._id && coursewareId && status === "available") {
+      await startCourseware(user._id, coursewareId);
+    }
+
+    setSelectedCourseware(courseware);
+  }
+
+  if (allCompleted) {
+    return <CourseSummary course={course} coursewares={course.coursewares} />;
   }
 
   return (
@@ -66,15 +91,17 @@ export default function CoursePage({ course, coursewares, user, updateUser }) {
             {course.title}
           </Title>
 
-          {coursewares.length > 0 ? (
+          {availableCoursewares.length > 0 ? (
             <CoursewareList
-              coursewares={coursewares}
-              currentIndex={currentIndex}
-              onSelect={setSelectedCourseware}
+              coursewares={availableCoursewares}
+              statusById={statusById}
+              onSelect={handleSelectCourseware}
             />
           ) : (
             <Stack>
-              <Text c="dimmed">No coursewares available for this course yet.</Text>
+              <Text c="dimmed">
+                No coursewares available for this course yet.
+              </Text>
               <Button color="blue" variant="outline">
                 Generate new courseware for this course
               </Button>
@@ -85,6 +112,7 @@ export default function CoursePage({ course, coursewares, user, updateUser }) {
         <CoursewarePlayer
           courseware={selectedCourseware}
           onComplete={handleComplete}
+          cwStatus={statusById[getId(selectedCourseware)]}
         />
       )}
     </Container>
