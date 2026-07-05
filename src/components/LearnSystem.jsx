@@ -12,7 +12,7 @@ import { useAuth } from "../context/AuthContext.jsx";
 import CourseList from "./CourseList.jsx";
 import CoursePage from "./CoursePage.jsx";
 import NewCoursePage from "./NewCoursePage.jsx";
-import { getCourses, getCoursewares, getCourseById } from "../api/courses.js";
+import { getCourses } from "../api/courses.js";
 import { startCourse } from "../api/users.js";
 import { generateCourseOutline } from "../api/ai.js";
 
@@ -20,14 +20,16 @@ export default function LearnSystem() {
   const { user, loading, reloadUser } = useAuth();
 
   const [allCourses, setAllCourses] = useState([]);
-  const [coursewares, setCoursewares] = useState([]);
   const [selectedCourse, setSelectedCourse] = useState(null);
   const [selectedNewCourse, setSelectedNewCourse] = useState(null);
   const [showNewCourses, setShowNewCourses] = useState(false);
   const [dataLoading, setDataLoading] = useState(true);
-  const [newCoursewares, setNewCoursewares] = useState([]);
   const [newTitle, setNewTitle] = useState("");
   const [creating, setCreating] = useState(false);
+
+  function getCourseId(value) {
+    return String(value?.courseId ?? value?._id ?? value?.id ?? "");
+  }
 
   // ---- Load courses when user is available ----
   useEffect(() => {
@@ -37,12 +39,8 @@ export default function LearnSystem() {
   async function loadData() {
     try {
       setDataLoading(true);
-      const [coursesData, coursewaresData] = await Promise.all([
-        getCourses(),
-        getCoursewares(),
-      ]);
+      const [coursesData] = await Promise.all([getCourses()]);
       setAllCourses(coursesData);
-      setCoursewares(coursewaresData);
     } catch (err) {
       console.error("Failed to load courses:", err);
     } finally {
@@ -51,12 +49,27 @@ export default function LearnSystem() {
   }
 
   function getCurrentCourses() {
-    return user?.myCurrentCourses || [];
+    const rawCurrentCourses = user?.myCurrentCourses || [];
+    const allCoursesById = new Map(
+      allCourses.map((course) => [getCourseId(course), course]),
+    );
+
+    return rawCurrentCourses
+      .map((course) => {
+        const courseId = getCourseId(course);
+        if (!courseId) return null;
+
+        return allCoursesById.get(courseId) || course;
+      })
+      .filter(Boolean);
   }
 
   function getAvailableCourses() {
-    const currentIds = getCurrentCourses().map((c) => String(c.courseId));
-    return allCourses.filter((c) => !currentIds.includes(String(c._id)));
+    const currentIds = new Set(
+      (user?.myCurrentCourses || []).map((course) => getCourseId(course)),
+    );
+
+    return allCourses.filter((course) => !currentIds.has(getCourseId(course)));
   }
 
   async function handleGenerateCourse() {
@@ -96,7 +109,7 @@ export default function LearnSystem() {
   // ---- Current Course Selected ----
   if (selectedCourse) {
     return (
-      <Container size="lg" py="xl">
+      <Container size="lg" py="xl" mt="40px">
         <Button
           variant="subtle"
           mb="md"
@@ -107,9 +120,6 @@ export default function LearnSystem() {
 
         <CoursePage
           course={selectedCourse}
-          coursewares={coursewares.filter(
-            (cw) => String(cw.courseId) === String(selectedCourse.courseId),
-          )}
           user={user}
           updateUser={reloadUser}
         />
@@ -131,7 +141,6 @@ export default function LearnSystem() {
 
         <NewCoursePage
           course={selectedNewCourse}
-          coursewares={newCoursewares}
           onStart={async () => {
             if (!user?._id) {
               console.error("Cannot start course: user not loaded yet");
@@ -168,14 +177,9 @@ export default function LearnSystem() {
 
       <CourseList
         courses={showNewCourses ? getAvailableCourses() : getCurrentCourses()}
-        coursewares={coursewares}
         isNew={showNewCourses}
         onSelectCourse={(course) => {
           if (showNewCourses) {
-            const cw = getAvailableCourses().filter(
-              (course) => course._id === selectedCourse,
-            )?.coursewares;
-            setNewCoursewares(cw);
             setSelectedNewCourse(course);
           } else {
             setSelectedCourse(course);
