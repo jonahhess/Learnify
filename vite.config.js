@@ -23,6 +23,10 @@ export default defineConfig(({ mode }) => {
           target: proxyTarget,
           changeOrigin: true,
         },
+        "/questions": {
+          target: proxyTarget,
+          changeOrigin: true,
+        },
         "/keywords": {
           target: proxyTarget,
           changeOrigin: true,
