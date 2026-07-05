@@ -11,7 +11,8 @@ import {
   Alert,
 } from "@mantine/core";
 import { getQuestionsByCourseware } from "../api/questions.js";
-import { startCourseware, submitCourseware } from "../api/coursewares.js";
+import { getCoursewareById } from "../api/courses.js";
+import { submitCourseware } from "../api/coursewares.js";
 import { useAuth } from "../context/AuthContext.jsx";
 import "./CoursewarePlayer.css";
 import Markdown from "react-markdown";
@@ -78,7 +79,8 @@ function buildHighlightedMarkdown(text, wrongQuestions) {
   return highlightedText;
 }
 
-export default function CoursewarePlayer({ courseware, onComplete }) {
+export default function CoursewarePlayer({ courseware, onComplete, cwStatus }) {
+  const [coursewareText, setCoursewareText] = useState("");
   const [questions, setQuestions] = useState([]);
   const [answers, setAnswers] = useState({});
   const [submitted, setSubmitted] = useState(false);
@@ -91,12 +93,17 @@ export default function CoursewarePlayer({ courseware, onComplete }) {
   const [submittingProgress, setSubmittingProgress] = useState(false);
   const { user, reloadUser } = useAuth();
 
+  const coursewareId = courseware.coursewareId || courseware._id;
+
   async function persistCoursewareCompletion() {
+    if (cwStatus === "completed") {
+      onComplete(true);
+    }
     setSubmitError("");
     setSubmittingProgress(true);
 
     try {
-      await submitCourseware(user._id, courseware._id);
+      await submitCourseware(user._id, coursewareId);
       await reloadUser();
       onComplete(true);
     } catch (err) {
@@ -114,10 +121,14 @@ export default function CoursewarePlayer({ courseware, onComplete }) {
     async function load() {
       try {
         setLoading(true);
-        startCourseware(user._id, courseware._id);
-        const data = await getQuestionsByCourseware(courseware._id);
+        const coursewareData = await getCoursewareById(coursewareId);
+        setCoursewareText(coursewareData?.text || "");
 
-        const withOptions = data.map((q) => ({
+        const questionsData =
+          (await getQuestionsByCourseware(coursewareId)) || [];
+        const questions = (
+          Array.isArray(questionsData) ? questionsData : []
+        ).map((q) => ({
           ...q,
           options: shuffleArray([
             q.correctAnswer,
@@ -125,7 +136,7 @@ export default function CoursewarePlayer({ courseware, onComplete }) {
           ]),
         }));
 
-        setQuestions(withOptions);
+        setQuestions(questions);
       } catch (err) {
         console.error("Failed to load questions:", err);
       } finally {
@@ -133,7 +144,7 @@ export default function CoursewarePlayer({ courseware, onComplete }) {
       }
     }
     load();
-  }, [courseware]);
+  }, [coursewareId, user?._id]);
 
   if (loading) {
     return (
@@ -149,37 +160,20 @@ export default function CoursewarePlayer({ courseware, onComplete }) {
 
   const q = questions[currentQuestion];
 
-  function handleSelect(questionId, value) {
-    if (!submitted) {
-      setAnswers((prev) => ({ ...prev, [questionId]: value }));
-    }
-  }
-
-  function getOptionColor(q, option) {
-    if (!submitted) return "blue";
-
-    if (option === q.correctAnswer) return "green";
-    if (answers[q._id] === option) return "red";
-    return "gray";
-  }
-
   async function handleSubmit() {
     setSubmitError("");
     setSubmitted(true);
 
-    let correctCount = 0;
-    const wrong = [];
-    const newColorMap = {};
-
-    questions.forEach((ques) => {
-      if (answers[ques._id] === ques.correctAnswer) {
-        correctCount++;
-      } else {
-        wrong.push(ques);
-        const color = pastelColors[wrong.length % pastelColors.length];
-        newColorMap[ques._id] = color;
-      }
-    });
+    const wrong = questions.filter(
+      (ques) => answers[ques._id] !== ques.correctAnswer,
+    );
+    const correctCount = questions.length - wrong.length;
+    const newColorMap = Object.fromEntries(
+      wrong.map((ques, idx) => [
+        ques._id,
+        pastelColors[(idx + 1) % pastelColors.length],
+      ]),
+    );
 
     const finalScore = Math.round((correctCount / questions.length) * 100);
     setScore(finalScore);
@@ -196,8 +190,8 @@ export default function CoursewarePlayer({ courseware, onComplete }) {
 
   const renderedCoursewareText =
     submitted && wrongQuestions.length > 0
-      ? buildHighlightedMarkdown(courseware.text, wrongQuestions)
-      : courseware.text;
+      ? buildHighlightedMarkdown(coursewareText, wrongQuestions)
+      : coursewareText;
 
   return (
     <div>
@@ -246,7 +240,11 @@ export default function CoursewarePlayer({ courseware, onComplete }) {
 
       <Radio.Group
         value={answers[q._id] || ""}
-        onChange={(val) => handleSelect(q._id, val)}
+        onChange={(val) => {
+          if (!submitted) {
+            setAnswers((prev) => ({ ...prev, [q._id]: val }));
+          }
+        }}
         orientation="vertical"
       >
         <Stack>
@@ -255,7 +253,17 @@ export default function CoursewarePlayer({ courseware, onComplete }) {
               key={i}
               value={option}
               label={
-                <span style={{ color: getOptionColor(q, option) }}>
+                <span
+                  style={{
+                    color: !submitted
+                      ? "blue"
+                      : option === q.correctAnswer
+                        ? "green"
+                        : answers[q._id] === option
+                          ? "red"
+                          : "gray",
+                  }}
+                >
                   {option}
                 </span>
               }
