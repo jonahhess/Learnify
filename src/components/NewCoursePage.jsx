@@ -1,6 +1,15 @@
-import { Container, Title, Timeline, Text, Button, Center } from "@mantine/core";
+import {
+  Container,
+  Title,
+  Timeline,
+  Text,
+  Button,
+  Center,
+} from "@mantine/core";
 
-export default function NewCoursePage({ course, coursewares, onStart }) {
+export default function NewCoursePage({ course, onStart }) {
+  const coursewares = course.coursewares;
+
   return (
     <Container size="lg" py="xl">
       <Title order={2} mb="lg">
