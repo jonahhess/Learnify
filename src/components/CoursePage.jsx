@@ -21,28 +21,24 @@ export default function CoursePage({ course, user, updateUser }) {
 
   const completedIds = new Set(
     (user?.myCompletedCoursewares || [])
-      .filter((cw) => {
+      .filter(cw => {
         const cwCourseId = getCourseId(cw);
         return !cwCourseId || cwCourseId === courseId;
       })
-      .map(getId),
+      .map(getId)
   );
 
   const currentIds = new Set(
     (user?.myCurrentCoursewares || [])
-      .filter((cw) => {
+      .filter(cw => {
         const cwCourseId = getCourseId(cw);
         return !cwCourseId || cwCourseId === courseId;
       })
-      .map(getId),
+      .map(getId)
   );
 
-  if (currentIds.size === 0 && availableCoursewares.length > 0) {
-    currentIds.add(getId(availableCoursewares[0]));
-  }
-
-  const completedCount = availableCoursewares.filter((cw) =>
-    completedIds.has(getId(cw)),
+  const completedCount = availableCoursewares.filter(cw =>
+    completedIds.has(getId(cw))
   ).length;
   const allCompleted =
     availableCoursewares.length > 0 &&
