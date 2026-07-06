@@ -7,7 +7,7 @@ function getId(value) {
 export default function CoursewareList({
   coursewares,
   statusById = {},
-  onSelect,
+  onSelect
 }) {
   return (
     <Stack>
@@ -15,7 +15,6 @@ export default function CoursewareList({
         const status = statusById[getId(cw)] || "available";
         const isCompleted = status === "completed";
         const isCurrent = status === "current";
-        const isAvailable = status === "available";
 
         let color = "gray";
         if (isCompleted) {
