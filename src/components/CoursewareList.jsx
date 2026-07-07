@@ -12,7 +12,7 @@ export default function CoursewareList({
   return (
     <Stack>
       {coursewares.map((cw, idx) => {
-        const status = statusById[getId(cw)] || "available";
+        const status = statusById[getId(cw)] || "idle";
         const isReady = status === "ready";
         const isCompleted = status === "completed";
         const isCurrent = status === "current";
