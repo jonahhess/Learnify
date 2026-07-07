@@ -7,17 +7,20 @@ function getId(value) {
 export default function CoursewareList({
   coursewares,
   statusById = {},
-  onSelect
+  onSelect,
 }) {
   return (
     <Stack>
       {coursewares.map((cw, idx) => {
         const status = statusById[getId(cw)] || "available";
+        const isReady = status === "ready;";
         const isCompleted = status === "completed";
         const isCurrent = status === "current";
 
         let color = "gray";
-        if (isCompleted) {
+        if (isReady) {
+          color = "black";
+        } else if (isCompleted) {
           color = "green";
         } else if (isCurrent) {
           color = "blue";
