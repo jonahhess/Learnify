@@ -60,8 +60,8 @@ export default function CoursePage({ course, user, updateUser }) {
 
   function handleComplete(passed) {
     if (!passed) return;
-    setSelectedCourseware(null);
     updateUser();
+    setSelectedCourseware(null);
   }
 
   async function handleSelectCourseware(courseware) {
