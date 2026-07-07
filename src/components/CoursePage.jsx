@@ -21,24 +21,24 @@ export default function CoursePage({ course, user, updateUser }) {
 
   const completedIds = new Set(
     (user?.myCompletedCoursewares || [])
-      .filter(cw => {
+      .filter((cw) => {
         const cwCourseId = getCourseId(cw);
         return !cwCourseId || cwCourseId === courseId;
       })
-      .map(getId)
+      .map(getId),
   );
 
   const currentIds = new Set(
     (user?.myCurrentCoursewares || [])
-      .filter(cw => {
+      .filter((cw) => {
         const cwCourseId = getCourseId(cw);
         return !cwCourseId || cwCourseId === courseId;
       })
-      .map(getId)
+      .map(getId),
   );
 
-  const completedCount = availableCoursewares.filter(cw =>
-    completedIds.has(getId(cw))
+  const completedCount = availableCoursewares.filter((cw) =>
+    completedIds.has(getId(cw)),
   ).length;
   const allCompleted =
     availableCoursewares.length > 0 &&
@@ -52,7 +52,7 @@ export default function CoursePage({ course, user, updateUser }) {
     } else if (currentIds.has(id)) {
       acc[id] = "current";
     } else {
-      acc[id] = "available";
+      acc[id] = cw.coursewareId ? "ready" : "idle";
     }
 
     return acc;
@@ -68,7 +68,11 @@ export default function CoursePage({ course, user, updateUser }) {
     const coursewareId = courseware?.coursewareId || courseware?._id;
     const status = statusById[getId(courseware)];
 
-    if (user?._id && coursewareId && status === "available") {
+    if (
+      user?._id &&
+      coursewareId &&
+      (status === "ready" || status === "idle")
+    ) {
       await startCourseware(user._id, coursewareId);
     }
 
