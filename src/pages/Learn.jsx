@@ -1,7 +1,7 @@
 import { Container } from "@mantine/core";
 import { Navigate } from "react-router-dom";
 import LearnSystem from "../components/LearnSystem";
-import { useAuth } from "../context/AuthContext.jsx";
+import { useAuth } from "../context/useAuth.jsx";
 
 export default function Learn() {
   const { user, loading } = useAuth();

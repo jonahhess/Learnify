@@ -8,7 +8,7 @@ import {
   Group,
   TextInput,
 } from "@mantine/core";
-import { useAuth } from "../context/AuthContext.jsx";
+import { useAuth } from "../context/useAuth.jsx";
 import CourseList from "./CourseList.jsx";
 import CoursePage from "./CoursePage.jsx";
 import NewCoursePage from "./NewCoursePage.jsx";

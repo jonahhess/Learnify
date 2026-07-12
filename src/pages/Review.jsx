@@ -1,84 +1,18 @@
-// Review.jsx
-import { useEffect, useState } from "react";
-import { Container, Title, Stack, Loader, Text, Button } from "@mantine/core";
-import ReviewCard from "../components/ReviewCard";
-import { batchSubmitReviewCards } from "../api/users";
-import { useAuth } from "../context/AuthContext";
+import { Container } from "@mantine/core";
+import { Navigate } from "react-router-dom";
+import ReviewSystem from "../components/ReviewSystem.jsx";
+import { useAuth } from "../context/useAuth.jsx";
 
 export default function Review() {
-  const [cards, setCards] = useState([]);
-  const [results, setResults] = useState([]);
-  const { user, loading: authLoading, reloadUser } = useAuth();
+  const { user, loading } = useAuth();
 
-  useEffect(() => {
-    reloadUser();
-  }, []);
-
-  useEffect(() => {
-    setCards(user?.myReviewCards ?? []);
-  }, [user]);
-
-  const handleAnswered = (result) => {
-    setResults((prev) => [...prev, result]);
-    // optionally remove card from view immediately:
-    setCards((prev) => prev.filter((c) => c._id !== result._id));
-  };
-
-  const handleSubmit = async () => {
-    try {
-      await batchSubmitReviewCards(user._id, results);
-      await reloadUser();
-      setResults([]);
-    } catch (err) {
-      console.error("Batch submit failed:", err);
-    }
-  };
-
-  if (authLoading) {
-    return (
-      <Container size="lg" py="xl" mt="40px">
-        <Loader />
-      </Container>
-    );
-  }
-
-  if (!user) {
-    return (
-      <Container py="xl" mt="40px">
-        <Title order={2}>Please log in to access your review cards.</Title>
-      </Container>
-    );
-  }
-
-  if (!cards.length) {
-    return (
-      <Container size="lg" py="xl" mt="40px">
-        <Title order={2}>Review</Title>
-        <Text c="dimmed">No review cards due today 🎉</Text>
-        {results.length > 0 && (
-          <Button mt="md" onClick={handleSubmit}>
-            Submit Results
-          </Button>
-        )}
-      </Container>
-    );
+  if (!loading && !user) {
+    return <Navigate to="/login" replace />;
   }
 
   return (
     <Container size="lg" py="xl">
-      <Title order={2} mb="lg" st>
-        Review
-      </Title>
-      <Stack>
-        {cards.map((card) => (
-          <ReviewCard key={card._id} card={card} onAnswered={handleAnswered} />
-        ))}
-      </Stack>
-      {results.length > 0 && (
-        <Button mt="lg" onClick={handleSubmit}>
-          Submit {results.length} Results
-        </Button>
-      )}
+      <ReviewSystem />
     </Container>
   );
 }

@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { useAuth } from "../context/AuthContext.jsx";
+import { useAuth } from "../context/useAuth.jsx";
 import { useLocation, useNavigate } from "react-router-dom";
 import { logout } from "../api/auth.js";
 import {

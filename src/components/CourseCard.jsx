@@ -1,5 +1,5 @@
 import { Card, Text, Progress } from "@mantine/core";
-import { useAuth } from "../context/AuthContext.jsx";
+import { useAuth } from "../context/useAuth.jsx";
 
 export default function CourseCard({ course, onClick, isNew }) {
   const { user } = useAuth();

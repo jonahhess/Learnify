@@ -13,7 +13,7 @@ import {
 import { getQuestionsByCourseware } from "../api/questions.js";
 import { getCoursewareById } from "../api/courses.js";
 import { submitCourseware } from "../api/coursewares.js";
-import { useAuth } from "../context/AuthContext.jsx";
+import { useAuth } from "../context/useAuth.jsx";
 import "./CoursewarePlayer.css";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";

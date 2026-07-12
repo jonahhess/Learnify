@@ -9,7 +9,7 @@ async function jsonFetch(url, options = {}) {
   let data;
   try {
     data = await res.json();
-  } catch (err) {
+  } catch {
     if (!res.ok) throw new Error("Request failed");
     data = {};
   }
