@@ -3,18 +3,17 @@ import { Card, Text, Button, Group, Badge, Stack } from "@mantine/core";
 import { useState } from "react";
 
 export default function ReviewCard({ card, onAnswered }) {
-  const [answered, setAnswered] = useState(false);
   const [correct, setCorrect] = useState(null);
+  const answered = correct !== null;
 
   const answers = [
     ...card.question.incorrectAnswers,
-    card.question.correctAnswer,
+    card.question.correctAnswer
   ].sort(() => Math.random() - 0.5);
 
-  const handleAnswer = (answer) => {
+  const handleAnswer = answer => {
     const success = answer === card.question.correctAnswer;
     setCorrect(success);
-    setAnswered(true);
 
     // tell parent result (_id + success flag)
     onAnswered?.({ _id: card._id, success: success ? 1 : 0 });
@@ -27,7 +26,7 @@ export default function ReviewCard({ card, onAnswered }) {
       withBorder
       style={{
         backgroundColor: answered ? (correct ? "#d4edda" : "#f8d7da") : "white",
-        transition: "background-color 0.3s ease",
+        transition: "background-color 0.3s ease"
       }}
     >
       <Stack gap="sm">
@@ -40,7 +39,7 @@ export default function ReviewCard({ card, onAnswered }) {
 
         {!answered ? (
           <Stack>
-            {answers.map((ans) => (
+            {answers.map(ans => (
               <Button
                 key={ans}
                 onClick={() => handleAnswer(ans)}
@@ -48,15 +47,15 @@ export default function ReviewCard({ card, onAnswered }) {
                 w="100%"
                 styles={{
                   root: {
-                    flexWrap: "wrap",
+                    flexWrap: "wrap"
                   },
                   inner: {
                     whiteSpace: "normal",
-                    textAlign: "center",
+                    textAlign: "center"
                   },
                   label: {
-                    whiteSpace: "normal",
-                  },
+                    whiteSpace: "normal"
+                  }
                 }}
               >
                 {ans}
