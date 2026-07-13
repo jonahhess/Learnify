@@ -1,5 +1,6 @@
+import { Suspense } from 'react';
 import { Routes, Route } from 'react-router-dom';
-import { AppShell } from '@mantine/core';
+import { AppShell, Center, Loader } from '@mantine/core';
 import { AuthProvider } from './context/AuthContext.jsx';
 
 import Main from './pages/Main.jsx';
@@ -12,22 +13,30 @@ import Sidebar from './components/Sidebar.jsx';
 
 export default function App() {
   return (
-    <AuthProvider>
-      <AppShell padding="md" header={{ height: 64 }} zIndex={300}>
-        <AppShell.Header>
-          <Sidebar />
-        </AppShell.Header>
+    <Suspense
+      fallback={
+        <Center style={{ minHeight: '100vh' }}>
+          <Loader size="lg" />
+        </Center>
+      }
+    >
+      <AuthProvider>
+        <AppShell padding="md" header={{ height: 64 }} zIndex={300}>
+          <AppShell.Header>
+            <Sidebar />
+          </AppShell.Header>
 
-        <AppShell.Main>
-          <Routes>
-            <Route path="/" element={<Main />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/signup" element={<Signup />} />
-            <Route path="/learn" element={<Learn />} />
-            <Route path="/review" element={<Review />} />
-          </Routes>
-        </AppShell.Main>
-      </AppShell>
-    </AuthProvider>
+          <AppShell.Main>
+            <Routes>
+              <Route path="/" element={<Main />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/signup" element={<Signup />} />
+              <Route path="/learn" element={<Learn />} />
+              <Route path="/review" element={<Review />} />
+            </Routes>
+          </AppShell.Main>
+        </AppShell>
+      </AuthProvider>
+    </Suspense>
   );
 }
