@@ -1,35 +1,39 @@
-import { useState, useEffect } from "react";
+import { use, useState } from "react";
 import { getMe, logout } from "../api/auth";
 import { getUserById } from "../api/users";
 import { AuthContext } from "./authContext.js";
 
-export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+const authCache = new Map();
 
-  async function reloadUser() {
-    setLoading(true);
-    try {
-      const me = await getMe();
-      if (!me?._id) {
-        setUser(null);
-        return;
-      }
-
-      // Step 2: Fetch full user data
-      const fullUser = await getUserById(me._id);
-      setUser(fullUser);
-    } catch (err) {
-      console.error("Failed to reload user:", err);
-      setUser(null);
-    } finally {
-      setLoading(false);
-    }
+function getAuthResource(version) {
+  if (!authCache.has(version)) {
+    authCache.set(
+      version,
+      (async () => {
+        try {
+          const me = await getMe();
+          if (!me?._id) return null;
+          return await getUserById(me._id);
+        } catch (err) {
+          console.error("Failed to reload user:", err);
+          return null;
+        }
+      })()
+    );
   }
 
-  useEffect(() => {
-    reloadUser();
-  }, []);
+  return authCache.get(version);
+}
+
+export function AuthProvider({ children }) {
+  const [version, setVersion] = useState(0);
+  const user = use(getAuthResource(version));
+
+  async function reloadUser() {
+    authCache.clear();
+    setVersion(prev => prev + 1);
+  }
+
   async function onLoggedOut() {
     try {
       await logout(); // call backend
@@ -37,11 +41,14 @@ export function AuthProvider({ children }) {
       console.error("Failed to call logout API:", err);
     }
     localStorage.removeItem("user");
-    setUser(null);
+    authCache.clear();
+    setVersion(prev => prev + 1);
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, reloadUser, onLoggedOut }}>
+    <AuthContext.Provider
+      value={{ user, loading: false, reloadUser, onLoggedOut }}
+    >
       {children}
     </AuthContext.Provider>
   );

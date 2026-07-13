@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { use, useState } from "react";
 import {
   Container,
   Title,
@@ -16,37 +16,44 @@ import { getCourses } from "../api/courses.js";
 import { startCourse } from "../api/users.js";
 import { generateCourseOutline } from "../api/ai.js";
 
+const courseCache = new Map();
+
+function getCoursesResource(userId, version) {
+  if (!userId) return Promise.resolve([]);
+
+  const key = `${userId}:${version}`;
+  if (!courseCache.has(key)) {
+    courseCache.set(
+      key,
+      getCourses().catch((err) => {
+        console.error("Failed to load courses:", err);
+        return [];
+      }),
+    );
+  }
+
+  return courseCache.get(key);
+}
+
 export default function LearnSystem() {
   const { user, loading, reloadUser } = useAuth();
 
-  const [allCourses, setAllCourses] = useState([]);
+  const [addedCourses, setAddedCourses] = useState([]);
   const [selectedCourse, setSelectedCourse] = useState(null);
   const [selectedNewCourse, setSelectedNewCourse] = useState(null);
   const [showNewCourses, setShowNewCourses] = useState(false);
-  const [dataLoading, setDataLoading] = useState(true);
   const [newTitle, setNewTitle] = useState("");
   const [creating, setCreating] = useState(false);
+  const [coursesVersion, setCoursesVersion] = useState(0);
 
   function getCourseId(value) {
     return String(value?.courseId ?? value?._id ?? value?.id ?? "");
   }
 
-  // ---- Load courses when user is available ----
-  useEffect(() => {
-    if (user) loadData();
-  }, [user]);
-
-  async function loadData() {
-    try {
-      setDataLoading(true);
-      const [coursesData] = await Promise.all([getCourses()]);
-      setAllCourses(coursesData);
-    } catch (err) {
-      console.error("Failed to load courses:", err);
-    } finally {
-      setDataLoading(false);
-    }
-  }
+  const fetchedCourses = user
+    ? use(getCoursesResource(user._id, coursesVersion))
+    : [];
+  const allCourses = [...fetchedCourses, ...addedCourses];
 
   function getCurrentCourses() {
     const rawCurrentCourses = user?.myCurrentCourses || [];
@@ -77,7 +84,7 @@ export default function LearnSystem() {
     try {
       setCreating(true);
       const newCourse = await generateCourseOutline({ title: newTitle });
-      setAllCourses((prev) => [...prev, newCourse]);
+      setAddedCourses((prev) => [...prev, newCourse]);
       setNewTitle("");
       setShowNewCourses(true);
     } catch (err) {
@@ -88,7 +95,7 @@ export default function LearnSystem() {
   }
 
   // ---- Guard for auth loading ----
-  if (loading || (user && dataLoading)) {
+  if (loading) {
     return (
       <Center py="xl">
         <Loader size="lg" />
@@ -149,6 +156,8 @@ export default function LearnSystem() {
             try {
               await startCourse(user._id, selectedNewCourse._id);
               await reloadUser();
+              courseCache.clear();
+              setCoursesVersion((prev) => prev + 1);
               setShowNewCourses(false);
               setSelectedNewCourse(null);
             } catch (err) {
