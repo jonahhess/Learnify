@@ -1,15 +1,5 @@
-import { useEffect, useState } from "react";
-import {
-  Title,
-  Text,
-  Button,
-  Group,
-  Radio,
-  Stack,
-  Loader,
-  Center,
-  Alert,
-} from "@mantine/core";
+import { use, useState } from "react";
+import { Title, Text, Button, Group, Radio, Stack, Alert } from "@mantine/core";
 import { getQuestionsByCourseware } from "../api/questions.js";
 import { getCoursewareById } from "../api/courses.js";
 import { submitCourseware } from "../api/coursewares.js";
@@ -19,6 +9,47 @@ import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeRaw from "rehype-raw";
 import rehypeSanitize, { defaultSchema } from "rehype-sanitize";
+
+const coursewareCache = new Map();
+
+function getCoursewareResource(coursewareId) {
+  if (!coursewareId) {
+    return Promise.resolve({ coursewareText: "", questions: [] });
+  }
+
+  if (!coursewareCache.has(coursewareId)) {
+    coursewareCache.set(
+      coursewareId,
+      (async () => {
+        try {
+          const coursewareData = await getCoursewareById(coursewareId);
+          const questionsData =
+            (await getQuestionsByCourseware(coursewareId)) || [];
+
+          const questions = (
+            Array.isArray(questionsData) ? questionsData : []
+          ).map(q => ({
+            ...q,
+            options: shuffleArray([
+              q.correctAnswer,
+              ...(q.incorrectAnswers || [])
+            ])
+          }));
+
+          return {
+            coursewareText: coursewareData?.text || "",
+            questions
+          };
+        } catch (err) {
+          console.error("Failed to load questions:", err);
+          return { coursewareText: "", questions: [] };
+        }
+      })()
+    );
+  }
+
+  return coursewareCache.get(coursewareId);
+}
 
 const pastelColors = [
   "#f8d7da",
@@ -30,7 +61,7 @@ const pastelColors = [
   "#e0f7fa",
   "#f3e5f5",
   "#f9fbe7",
-  "#ffe0b2",
+  "#ffe0b2"
 ];
 
 function shuffleArray(array) {
@@ -42,8 +73,8 @@ const markdownSanitizeSchema = {
   tagNames: [...(defaultSchema.tagNames || []), "mark"],
   attributes: {
     ...defaultSchema.attributes,
-    mark: [...(defaultSchema.attributes?.mark || []), "data-qid"],
-  },
+    mark: [...(defaultSchema.attributes?.mark || []), "data-qid"]
+  }
 };
 
 function escapeAttribute(value) {
@@ -58,16 +89,16 @@ function buildHighlightedMarkdown(text, wrongQuestions) {
   if (!wrongQuestions.length) return text;
 
   const sorted = [...wrongQuestions].sort(
-    (a, b) => b.answerStartIndex - a.answerStartIndex,
+    (a, b) => b.answerStartIndex - a.answerStartIndex
   );
 
   let highlightedText = text;
 
-  sorted.forEach((q) => {
+  sorted.forEach(q => {
     const start = Math.max(0, Math.min(text.length, q.answerStartIndex ?? 0));
     const end = Math.max(
       start,
-      Math.min(text.length, q.answerEndIndex ?? start),
+      Math.min(text.length, q.answerEndIndex ?? start)
     );
 
     if (start === end) return;
@@ -80,12 +111,9 @@ function buildHighlightedMarkdown(text, wrongQuestions) {
 }
 
 export default function CoursewarePlayer({ courseware, onComplete, cwStatus }) {
-  const [coursewareText, setCoursewareText] = useState("");
-  const [questions, setQuestions] = useState([]);
   const [answers, setAnswers] = useState({});
   const [submitted, setSubmitted] = useState(false);
   const [currentQuestion, setCurrentQuestion] = useState(0);
-  const [loading, setLoading] = useState(true);
   const [score, setScore] = useState(null);
   const [wrongQuestions, setWrongQuestions] = useState([]);
   const [colorMap, setColorMap] = useState({});
@@ -94,6 +122,9 @@ export default function CoursewarePlayer({ courseware, onComplete, cwStatus }) {
   const { user, reloadUser } = useAuth();
 
   const coursewareId = courseware.coursewareId || courseware._id;
+  const resource = use(getCoursewareResource(coursewareId));
+  const coursewareText = resource.coursewareText;
+  const questions = resource.questions;
 
   async function persistCoursewareCompletion() {
     if (cwStatus === "completed") {
@@ -110,48 +141,11 @@ export default function CoursewarePlayer({ courseware, onComplete, cwStatus }) {
       console.error("Failed to submit courseware:", err);
       setSubmitError(
         err?.message ||
-          "We could not save your courseware progress. Please try again.",
+          "We could not save your courseware progress. Please try again."
       );
     } finally {
       setSubmittingProgress(false);
     }
-  }
-
-  useEffect(() => {
-    async function load() {
-      try {
-        setLoading(true);
-        const coursewareData = await getCoursewareById(coursewareId);
-        setCoursewareText(coursewareData?.text || "");
-
-        const questionsData =
-          (await getQuestionsByCourseware(coursewareId)) || [];
-        const questions = (
-          Array.isArray(questionsData) ? questionsData : []
-        ).map((q) => ({
-          ...q,
-          options: shuffleArray([
-            q.correctAnswer,
-            ...(q.incorrectAnswers || []),
-          ]),
-        }));
-
-        setQuestions(questions);
-      } catch (err) {
-        console.error("Failed to load questions:", err);
-      } finally {
-        setLoading(false);
-      }
-    }
-    load();
-  }, [coursewareId, user?._id]);
-
-  if (loading) {
-    return (
-      <Center py="xl">
-        <Loader size="lg" />
-      </Center>
-    );
   }
 
   if (questions.length === 0) {
@@ -165,14 +159,14 @@ export default function CoursewarePlayer({ courseware, onComplete, cwStatus }) {
     setSubmitted(true);
 
     const wrong = questions.filter(
-      (ques) => answers[ques._id] !== ques.correctAnswer,
+      ques => answers[ques._id] !== ques.correctAnswer
     );
     const correctCount = questions.length - wrong.length;
     const newColorMap = Object.fromEntries(
       wrong.map((ques, idx) => [
         ques._id,
-        pastelColors[(idx + 1) % pastelColors.length],
-      ]),
+        pastelColors[(idx + 1) % pastelColors.length]
+      ])
     );
 
     const finalScore = Math.round((correctCount / questions.length) * 100);
@@ -214,7 +208,7 @@ export default function CoursewarePlayer({ courseware, onComplete, cwStatus }) {
                   style={{ backgroundColor: color, padding: "0 2px" }}
                 />
               );
-            },
+            }
           }}
         >
           {renderedCoursewareText}
@@ -232,7 +226,7 @@ export default function CoursewarePlayer({ courseware, onComplete, cwStatus }) {
               ? colorMap[q._id]
               : "transparent",
           padding: "6px 10px",
-          borderRadius: "6px",
+          borderRadius: "6px"
         }}
       >
         {q.questionText}
@@ -240,9 +234,9 @@ export default function CoursewarePlayer({ courseware, onComplete, cwStatus }) {
 
       <Radio.Group
         value={answers[q._id] || ""}
-        onChange={(val) => {
+        onChange={val => {
           if (!submitted) {
-            setAnswers((prev) => ({ ...prev, [q._id]: val }));
+            setAnswers(prev => ({ ...prev, [q._id]: val }));
           }
         }}
         orientation="vertical"
@@ -261,7 +255,7 @@ export default function CoursewarePlayer({ courseware, onComplete, cwStatus }) {
                         ? "green"
                         : answers[q._id] === option
                           ? "red"
-                          : "gray",
+                          : "gray"
                   }}
                 >
                   {option}
@@ -275,7 +269,7 @@ export default function CoursewarePlayer({ courseware, onComplete, cwStatus }) {
 
       <Group mt="lg">
         <Button
-          onClick={() => setCurrentQuestion((i) => Math.max(i - 1, 0))}
+          onClick={() => setCurrentQuestion(i => Math.max(i - 1, 0))}
           disabled={currentQuestion === 0}
         >
           ← Previous
@@ -283,7 +277,7 @@ export default function CoursewarePlayer({ courseware, onComplete, cwStatus }) {
         {currentQuestion < questions.length - 1 ? (
           <Button
             onClick={() =>
-              setCurrentQuestion((i) => Math.min(i + 1, questions.length - 1))
+              setCurrentQuestion(i => Math.min(i + 1, questions.length - 1))
             }
           >
             Next →
