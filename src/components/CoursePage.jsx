@@ -64,15 +64,6 @@ export default function CoursePage({ course, user, updateUser }) {
       .map(getId),
   );
 
-  const currentIds = new Set(
-    (user?.myCurrentCoursewares || [])
-      .filter((cw) => {
-        const cwCourseId = getCourseId(cw);
-        return !cwCourseId || cwCourseId === courseId;
-      })
-      .map(getId),
-  );
-
   const completedCount = availableCoursewares.filter((cw) =>
     completedIds.has(getId(cw)),
   ).length;

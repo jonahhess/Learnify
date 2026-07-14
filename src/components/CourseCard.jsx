@@ -22,11 +22,6 @@ export default function CourseCard({ course, onClick, isNew }) {
     },
   );
 
-  const currentForCourse = (user?.myCurrentCoursewares || []).filter((cw) => {
-    const cwCourseId = getCourseId(cw);
-    return !cwCourseId || cwCourseId === courseId;
-  });
-
   const totalCount = allCoursewares.length;
   const completedCount = allCoursewares.length
     ? allCoursewares.filter((cw) =>
@@ -38,10 +33,7 @@ export default function CourseCard({ course, onClick, isNew }) {
     totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
 
   const currentTitle = currentForCourse[0]?.title;
-  const subtitle = isNew
-    ? "Ready to start"
-    : currentTitle ||
-      (completedCount > 0 ? "Continue learning" : "Start course");
+  const subtitle = "Ready to start";
 
   return (
     <Card
