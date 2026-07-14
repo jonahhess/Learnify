@@ -1,13 +1,15 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Container, Title, Text, Stack, Button } from "@mantine/core";
 import CoursewarePlayer from "./CoursewarePlayer.jsx";
 import CourseSummary from "./CourseSummary.jsx";
 import CoursewareList from "./CoursewareList.jsx";
 import { startCourseware } from "../api/coursewares.js";
+import { getCourseById } from "../api/courses.js";
 
 export default function CoursePage({ course, user, updateUser }) {
+  const [courseData, setCourseData] = useState(course);
   const [selectedCourseware, setSelectedCourseware] = useState(null);
-  const availableCoursewares = course?.coursewares || [];
+  const availableCoursewares = courseData?.coursewares || [];
 
   function getId(value) {
     return String(value?.coursewareId ?? value?._id ?? value?.id ?? "");
@@ -17,7 +19,41 @@ export default function CoursePage({ course, user, updateUser }) {
     return String(value?.courseId ?? value?._id ?? value?.id ?? "");
   }
 
-  const courseId = getCourseId(course);
+  const courseId = getCourseId(courseData);
+
+  useEffect(() => {
+    setCourseData(course);
+  }, [course]);
+
+  useEffect(() => {
+    if (!courseId || selectedCourseware) return;
+
+    let isMounted = true;
+    let isPolling = false;
+
+    async function refreshCourse() {
+      if (isPolling) return;
+
+      try {
+        isPolling = true;
+        const latestCourse = await getCourseById(courseId);
+        if (isMounted) {
+          setCourseData(latestCourse);
+        }
+      } catch (err) {
+        console.error("Failed to refresh courseware availability:", err);
+      } finally {
+        isPolling = false;
+      }
+    }
+
+    const intervalId = setInterval(refreshCourse, 10000);
+
+    return () => {
+      isMounted = false;
+      clearInterval(intervalId);
+    };
+  }, [courseId, selectedCourseware]);
 
   const completedIds = new Set(
     (user?.myCompletedCoursewares || [])
@@ -80,7 +116,9 @@ export default function CoursePage({ course, user, updateUser }) {
   }
 
   if (allCompleted) {
-    return <CourseSummary course={course} coursewares={course.coursewares} />;
+    return (
+      <CourseSummary course={courseData} coursewares={availableCoursewares} />
+    );
   }
 
   return (
@@ -88,7 +126,7 @@ export default function CoursePage({ course, user, updateUser }) {
       {!selectedCourseware ? (
         <>
           <Title order={2} mb="md">
-            {course.title}
+            {courseData?.title}
           </Title>
 
           {availableCoursewares.length > 0 ? (
