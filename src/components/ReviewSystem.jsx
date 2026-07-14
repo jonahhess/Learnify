@@ -1,22 +1,20 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Container, Title, Stack, Loader, Text, Button } from "@mantine/core";
 import ReviewCard from "../components/ReviewCard";
 import { batchSubmitReviewCards } from "../api/users";
 import { useAuth } from "../context/useAuth.jsx";
 
 export default function ReviewSystem() {
-  const [cards, setCards] = useState([]);
   const [results, setResults] = useState([]);
   const { user, loading: authLoading, reloadUser } = useAuth();
 
-  useEffect(() => {
-    setCards(user?.myReviewCards ?? []);
-  }, [user]);
+  const answeredIds = new Set(results.map(item => item._id));
+  const cards = (user?.myReviewCards ?? []).filter(
+    card => !answeredIds.has(card._id)
+  );
 
-  const handleAnswered = (result) => {
-    setResults((prev) => [...prev, result]);
-    // optionally remove card from view immediately:
-    setCards((prev) => prev.filter((c) => c._id !== result._id));
+  const handleAnswered = result => {
+    setResults(prev => [...prev, result]);
   };
 
   const handleSubmit = async () => {
@@ -67,7 +65,7 @@ export default function ReviewSystem() {
         Review
       </Title>
       <Stack>
-        {cards.map((card) => (
+        {cards.map(card => (
           <ReviewCard key={card._id} card={card} onAnswered={handleAnswered} />
         ))}
       </Stack>

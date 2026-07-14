@@ -3,18 +3,17 @@ import { Card, Text, Button, Group, Badge, Stack } from "@mantine/core";
 import { useState } from "react";
 
 export default function ReviewCard({ card, onAnswered }) {
-  const [answered, setAnswered] = useState(false);
   const [correct, setCorrect] = useState(null);
+  const answered = correct !== null;
 
   const answers = [
     ...card.question.incorrectAnswers,
-    card.question.correctAnswer,
+    card.question.correctAnswer
   ].sort(() => Math.random() - 0.5);
 
-  const handleAnswer = (answer) => {
+  const handleAnswer = answer => {
     const success = answer === card.question.correctAnswer;
     setCorrect(success);
-    setAnswered(true);
     onAnswered?.({ questionId: card.question._id, success });
   };
 
@@ -30,7 +29,7 @@ export default function ReviewCard({ card, onAnswered }) {
 
         {!answered ? (
           <Group grow>
-            {answers.map((ans) => (
+            {answers.map(ans => (
               <Button
                 key={ans}
                 onClick={() => handleAnswer(ans)}

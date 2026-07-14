@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useAuth } from "../context/useAuth.jsx";
 import { useLocation, useNavigate } from "react-router-dom";
 import { logout } from "../api/auth.js";
@@ -12,7 +12,7 @@ import {
   Text,
   Group,
   Divider,
-  Button,
+  Button
 } from "@mantine/core";
 import {
   IconHome2,
@@ -20,7 +20,7 @@ import {
   IconChartBar,
   IconLogout,
   IconLogin,
-  IconUserPlus,
+  IconUserPlus
 } from "@tabler/icons-react";
 
 import classes from "./Sidebar.module.css";
@@ -58,16 +58,12 @@ export default function Sidebar() {
     navigate("/login");
   }
 
-  const mainLinks = useMemo(
-    () =>
-      isAuthed
-        ? [
-            { icon: IconBook, label: "Learn", to: "/learn" },
-            { icon: IconChartBar, label: "Review", to: "/review" },
-          ]
-        : [],
-    [isAuthed],
-  );
+  const mainLinks = isAuthed
+    ? [
+        { icon: IconBook, label: "Learn", to: "/learn" },
+        { icon: IconChartBar, label: "Review", to: "/review" }
+      ]
+    : [];
 
   return (
     <>
