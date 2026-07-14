@@ -15,15 +15,12 @@ export default function CoursewareList({
         const status = statusById[getId(cw)] || "idle";
         const isReady = status === "ready";
         const isCompleted = status === "completed";
-        const isCurrent = status === "current";
 
         let color = "gray";
         if (isReady) {
-          color = "black";
+          color = "blue";
         } else if (isCompleted) {
           color = "green";
-        } else if (isCurrent) {
-          color = "blue";
         }
 
         return (
