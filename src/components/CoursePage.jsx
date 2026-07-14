@@ -76,8 +76,6 @@ export default function CoursePage({ course, user, updateUser }) {
 
     if (completedIds.has(id)) {
       acc[id] = "completed";
-    } else if (currentIds.has(id)) {
-      acc[id] = "current";
     } else {
       acc[id] = cw.coursewareId ? "ready" : "idle";
     }
