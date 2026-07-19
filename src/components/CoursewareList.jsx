@@ -7,12 +7,19 @@ function getId(value) {
 export default function CoursewareList({
   coursewares,
   statusById = {},
+  pendingCoursewareKey = "",
+  getCoursewareKey,
   onSelect,
 }) {
   return (
     <Stack>
       {coursewares.map((cw, idx) => {
         const status = statusById[getId(cw)] || "idle";
+        const itemKey = getCoursewareKey
+          ? getCoursewareKey(cw, idx)
+          : String(cw?._id || cw?.id || cw?.coursewareId || idx);
+        const isLoading = pendingCoursewareKey === itemKey;
+        const hasPendingRequest = pendingCoursewareKey !== "";
         const isReady = status === "ready";
         const isCompleted = status === "completed";
 
@@ -29,6 +36,8 @@ export default function CoursewareList({
             fullWidth
             color={color}
             variant="light"
+            loading={isLoading}
+            disabled={hasPendingRequest}
             onClick={() => {
               onSelect(cw);
             }}

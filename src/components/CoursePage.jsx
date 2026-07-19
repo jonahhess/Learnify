@@ -9,6 +9,7 @@ import { getCourseById } from "../api/courses.js";
 export default function CoursePage({ course, user, updateUser }) {
   const [courseData, setCourseData] = useState(course);
   const [selectedCourseware, setSelectedCourseware] = useState(null);
+  const [pendingCoursewareKey, setPendingCoursewareKey] = useState("");
   const availableCoursewares = courseData?.coursewares || [];
 
   function getId(value) {
@@ -17,6 +18,10 @@ export default function CoursePage({ course, user, updateUser }) {
 
   function getCourseId(value) {
     return String(value?.courseId ?? value?._id ?? value?.id ?? "");
+  }
+
+  function getCoursewareKey(value, fallback = "") {
+    return String(value?._id ?? value?.id ?? value?.coursewareId ?? fallback);
   }
 
   const courseId = getCourseId(courseData);
@@ -92,12 +97,26 @@ export default function CoursePage({ course, user, updateUser }) {
   async function handleSelectCourseware(courseware) {
     const coursewareId = courseware?.coursewareId || courseware?._id;
     const status = statusById[getId(courseware)];
+    const coursewareKey = getCoursewareKey(courseware);
 
-    if (
-      user?._id &&
-      coursewareId &&
-      (status === "ready" || status === "idle")
-    ) {
+    if (status === "idle") {
+      if (!user?._id || !coursewareId) return;
+
+      setPendingCoursewareKey(coursewareKey);
+      try {
+        await startCourseware(user._id, coursewareId);
+        const latestCourse = await getCourseById(courseId);
+        setCourseData(latestCourse);
+      } catch (err) {
+        console.error("Failed to start courseware:", err);
+      } finally {
+        setPendingCoursewareKey("");
+      }
+
+      return;
+    }
+
+    if (user?._id && coursewareId && status === "ready") {
       await startCourseware(user._id, coursewareId);
     }
 
@@ -122,6 +141,8 @@ export default function CoursePage({ course, user, updateUser }) {
             <CoursewareList
               coursewares={availableCoursewares}
               statusById={statusById}
+              pendingCoursewareKey={pendingCoursewareKey}
+              getCoursewareKey={getCoursewareKey}
               onSelect={handleSelectCourseware}
             />
           ) : (
