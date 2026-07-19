@@ -21,10 +21,10 @@ export default function ReviewSystem() {
   const { user, loading: authLoading, reloadUser } = useAuth();
 
   const answeredIds = new Set(results.map((item) => item._id));
-  const deletedIds = new Set(deletingCardId ? [deletingCardId] : []);
   const cards = (user?.myReviewCards ?? []).filter(
-    (card) => !answeredIds.has(card._id) && !deletedIds.has(card._id),
+    (card) => !answeredIds.has(card._id),
   );
+  const currentCard = cards[currentIndex] ?? null;
 
   useEffect(() => {
     if (cards.length === 0) {
@@ -50,7 +50,6 @@ export default function ReviewSystem() {
   };
 
   const handleDeleteCurrent = async () => {
-    const currentCard = cards[currentIndex];
     if (!currentCard?._id || deletingCardId) return;
 
     const cardId = currentCard._id;
@@ -110,6 +109,14 @@ export default function ReviewSystem() {
     );
   }
 
+  if (!currentCard) {
+    return (
+      <Container size="lg" py="xl" mt="40px">
+        <Loader />
+      </Container>
+    );
+  }
+
   return (
     <Container size="lg" py="xl">
       <Title order={2} mb="lg">
@@ -138,8 +145,8 @@ export default function ReviewSystem() {
             color="red"
             variant="light"
             onClick={handleDeleteCurrent}
-            loading={Boolean(deletingCardId)}
-            disabled={!cards[currentIndex] || Boolean(deletingCardId)}
+            loading={deletingCardId === currentCard._id}
+            disabled={Boolean(deletingCardId)}
           >
             Delete This Card
           </Button>
@@ -147,8 +154,8 @@ export default function ReviewSystem() {
 
         <Center>
           <ReviewCard
-            key={cards[currentIndex]?._id}
-            card={cards[currentIndex]}
+            key={currentCard._id}
+            card={currentCard}
             onAnswered={handleAnswered}
           />
         </Center>
