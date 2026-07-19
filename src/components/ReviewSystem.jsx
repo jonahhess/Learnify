@@ -11,16 +11,19 @@ import {
 } from "@mantine/core";
 import ReviewCard from "../components/ReviewCard";
 import { batchSubmitReviewCards } from "../api/users";
+import { deleteReviewCard } from "../api/reviewCard";
 import { useAuth } from "../context/useAuth.jsx";
 
 export default function ReviewSystem() {
   const [results, setResults] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [deletingCardId, setDeletingCardId] = useState(null);
   const { user, loading: authLoading, reloadUser } = useAuth();
 
   const answeredIds = new Set(results.map((item) => item._id));
+  const deletedIds = new Set(deletingCardId ? [deletingCardId] : []);
   const cards = (user?.myReviewCards ?? []).filter(
-    (card) => !answeredIds.has(card._id),
+    (card) => !answeredIds.has(card._id) && !deletedIds.has(card._id),
   );
 
   useEffect(() => {
@@ -44,6 +47,24 @@ export default function ReviewSystem() {
 
   const handleNext = () => {
     setCurrentIndex((i) => Math.min(i + 1, cards.length - 1));
+  };
+
+  const handleDeleteCurrent = async () => {
+    const currentCard = cards[currentIndex];
+    if (!currentCard?._id || deletingCardId) return;
+
+    const cardId = currentCard._id;
+
+    try {
+      setDeletingCardId(cardId);
+      await deleteReviewCard(cardId);
+      setResults((prev) => prev.filter((item) => item._id !== cardId));
+      await reloadUser();
+    } catch (err) {
+      console.error("Failed to delete review card:", err);
+    } finally {
+      setDeletingCardId(null);
+    }
   };
 
   const handleSubmit = async () => {
@@ -112,6 +133,18 @@ export default function ReviewSystem() {
             disabled={currentIndex >= cards.length - 1}
           >
             Next →
+          </Button>
+        </Group>
+
+        <Group justify="center">
+          <Button
+            color="red"
+            variant="light"
+            onClick={handleDeleteCurrent}
+            loading={Boolean(deletingCardId)}
+            disabled={!cards[currentIndex] || Boolean(deletingCardId)}
+          >
+            Delete This Card
           </Button>
         </Group>
 
