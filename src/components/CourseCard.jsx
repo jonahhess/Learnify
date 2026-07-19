@@ -32,7 +32,7 @@ export default function CourseCard({ course, onClick, isNew }) {
   const progress =
     totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
 
-  const currentTitle = currentForCourse[0]?.title;
+  const currentTitle = currentForCourse ? currentForCourse[0]?.title : "";
   const subtitle = "Ready to start";
 
   return (
