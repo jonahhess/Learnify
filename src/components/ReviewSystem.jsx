@@ -116,6 +116,9 @@ export default function ReviewSystem() {
         Review
       </Title>
       <Stack gap="md">
+        <Text c="dimmed">
+          Card {currentIndex + 1} of {cards.length}
+        </Text>
         <Group justify="space-between" align="center">
           <Button
             variant="default"
@@ -124,9 +127,6 @@ export default function ReviewSystem() {
           >
             ← Previous
           </Button>
-          <Text c="dimmed">
-            Card {currentIndex + 1} of {cards.length}
-          </Text>
           <Button
             variant="default"
             onClick={handleNext}
@@ -134,9 +134,6 @@ export default function ReviewSystem() {
           >
             Next →
           </Button>
-        </Group>
-
-        <Group justify="center">
           <Button
             color="red"
             variant="light"
