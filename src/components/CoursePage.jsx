@@ -10,6 +10,7 @@ export default function CoursePage({ course, user, updateUser }) {
   const [courseData, setCourseData] = useState(course);
   const [selectedCourseware, setSelectedCourseware] = useState(null);
   const [pendingCoursewareKey, setPendingCoursewareKey] = useState("");
+  const [optimisticReadyIds, setOptimisticReadyIds] = useState(new Set());
   const availableCoursewares = courseData?.coursewares || [];
 
   function getId(value) {
@@ -28,6 +29,7 @@ export default function CoursePage({ course, user, updateUser }) {
 
   useEffect(() => {
     setCourseData(course);
+    setOptimisticReadyIds(new Set());
   }, [course]);
 
   useEffect(() => {
@@ -81,8 +83,10 @@ export default function CoursePage({ course, user, updateUser }) {
 
     if (completedIds.has(id)) {
       acc[id] = "completed";
+    } else if (optimisticReadyIds.has(id) || cw.coursewareId) {
+      acc[id] = "ready";
     } else {
-      acc[id] = cw.coursewareId ? "ready" : "idle";
+      acc[id] = "idle";
     }
 
     return acc;
@@ -96,7 +100,8 @@ export default function CoursePage({ course, user, updateUser }) {
 
   async function handleSelectCourseware(courseware) {
     const coursewareId = courseware?.coursewareId || courseware?._id;
-    const status = statusById[getId(courseware)];
+    const localId = getId(courseware);
+    const status = statusById[localId];
     const coursewareKey = getCoursewareKey(courseware);
 
     if (status === "idle") {
@@ -105,6 +110,7 @@ export default function CoursePage({ course, user, updateUser }) {
       setPendingCoursewareKey(coursewareKey);
       try {
         await startCourseware(user._id, coursewareId);
+        setOptimisticReadyIds((prev) => new Set([...prev, localId]));
         const latestCourse = await getCourseById(courseId);
         setCourseData(latestCourse);
       } catch (err) {

@@ -94,6 +94,13 @@ export default function LearnSystem() {
     }
   }
 
+  async function handleBackToCourses() {
+    setSelectedCourse(null);
+    await reloadUser();
+    courseCache.clear();
+    setCoursesVersion((prev) => prev + 1);
+  }
+
   // ---- Guard for auth loading ----
   if (loading) {
     return (
@@ -117,11 +124,7 @@ export default function LearnSystem() {
   if (selectedCourse) {
     return (
       <Container size="lg" py="xl" mt="40px">
-        <Button
-          variant="subtle"
-          mb="md"
-          onClick={() => setSelectedCourse(null)}
-        >
+        <Button variant="subtle" mb="md" onClick={handleBackToCourses}>
           ← Back to Courses
         </Button>
 
