@@ -10,10 +10,18 @@ async function jsonFetch(url, options = {}) {
   try {
     data = await res.json();
   } catch {
-    if (!res.ok) throw new Error("Request failed");
+    if (!res.ok) {
+      const err = new Error("Request failed");
+      err.status = res.status;
+      throw err;
+    }
     data = {};
   }
-  if (!res.ok) throw new Error(data.message || "Request failed");
+  if (!res.ok) {
+    const err = new Error(data.message || "Request failed");
+    err.status = res.status;
+    throw err;
+  }
   return data;
 }
 

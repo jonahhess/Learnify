@@ -15,10 +15,14 @@ function getAuthResource(version) {
           if (!me?._id) return null;
           return await getUserById(me._id);
         } catch (err) {
+          if (err?.status === 401) {
+            // Expected when no authenticated session exists yet.
+            return null;
+          }
           console.error("Failed to reload user:", err);
           return null;
         }
-      })()
+      })(),
     );
   }
 
@@ -31,7 +35,7 @@ export function AuthProvider({ children }) {
 
   async function reloadUser() {
     authCache.clear();
-    setVersion(prev => prev + 1);
+    setVersion((prev) => prev + 1);
   }
 
   async function onLoggedOut() {
@@ -42,7 +46,7 @@ export function AuthProvider({ children }) {
     }
     localStorage.removeItem("user");
     authCache.clear();
-    setVersion(prev => prev + 1);
+    setVersion((prev) => prev + 1);
   }
 
   return (
