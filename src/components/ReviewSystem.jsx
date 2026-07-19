@@ -1,20 +1,49 @@
-import { useState } from "react";
-import { Container, Title, Stack, Loader, Text, Button } from "@mantine/core";
+import { useEffect, useState } from "react";
+import {
+  Container,
+  Title,
+  Loader,
+  Text,
+  Button,
+  Group,
+  Stack,
+  Center,
+} from "@mantine/core";
 import ReviewCard from "../components/ReviewCard";
 import { batchSubmitReviewCards } from "../api/users";
 import { useAuth } from "../context/useAuth.jsx";
 
 export default function ReviewSystem() {
   const [results, setResults] = useState([]);
+  const [currentIndex, setCurrentIndex] = useState(0);
   const { user, loading: authLoading, reloadUser } = useAuth();
 
-  const answeredIds = new Set(results.map(item => item._id));
+  const answeredIds = new Set(results.map((item) => item._id));
   const cards = (user?.myReviewCards ?? []).filter(
-    card => !answeredIds.has(card._id)
+    (card) => !answeredIds.has(card._id),
   );
 
-  const handleAnswered = result => {
-    setResults(prev => [...prev, result]);
+  useEffect(() => {
+    if (cards.length === 0) {
+      setCurrentIndex(0);
+      return;
+    }
+
+    if (currentIndex > cards.length - 1) {
+      setCurrentIndex(cards.length - 1);
+    }
+  }, [cards.length, currentIndex]);
+
+  const handleAnswered = (result) => {
+    setResults((prev) => [...prev, result]);
+  };
+
+  const handlePrev = () => {
+    setCurrentIndex((i) => Math.max(i - 1, 0));
+  };
+
+  const handleNext = () => {
+    setCurrentIndex((i) => Math.min(i + 1, cards.length - 1));
   };
 
   const handleSubmit = async () => {
@@ -24,6 +53,7 @@ export default function ReviewSystem() {
       await batchSubmitReviewCards(user._id, results);
       await reloadUser();
       setResults([]);
+      setCurrentIndex(0);
     } catch (err) {
       console.error("Batch submit failed:", err);
     }
@@ -64,10 +94,34 @@ export default function ReviewSystem() {
       <Title order={2} mb="lg">
         Review
       </Title>
-      <Stack>
-        {cards.map(card => (
-          <ReviewCard key={card._id} card={card} onAnswered={handleAnswered} />
-        ))}
+      <Stack gap="md">
+        <Group justify="space-between" align="center">
+          <Button
+            variant="default"
+            onClick={handlePrev}
+            disabled={currentIndex === 0}
+          >
+            ← Previous
+          </Button>
+          <Text c="dimmed">
+            Card {currentIndex + 1} of {cards.length}
+          </Text>
+          <Button
+            variant="default"
+            onClick={handleNext}
+            disabled={currentIndex >= cards.length - 1}
+          >
+            Next →
+          </Button>
+        </Group>
+
+        <Center>
+          <ReviewCard
+            key={cards[currentIndex]?._id}
+            card={cards[currentIndex]}
+            onAnswered={handleAnswered}
+          />
+        </Center>
       </Stack>
       {results.length > 0 && (
         <Button mt="lg" onClick={handleSubmit}>
