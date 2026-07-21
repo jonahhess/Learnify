@@ -99,13 +99,18 @@ export default function CoursePage({ course, user, updateUser }) {
   }
 
   async function handleSelectCourseware(courseware) {
+    if (!user?._id) {
+      setSelectedCourseware(null);
+      return;
+    }
+
     const coursewareId = courseware?.coursewareId || courseware?._id;
     const localId = getId(courseware);
     const status = statusById[localId];
     const coursewareKey = getCoursewareKey(courseware);
 
     if (status === "idle") {
-      if (!user?._id || !coursewareId) return;
+      if (!coursewareId) return;
 
       setPendingCoursewareKey(coursewareKey);
       try {
@@ -122,7 +127,7 @@ export default function CoursePage({ course, user, updateUser }) {
       return;
     }
 
-    if (user?._id && coursewareId && status === "ready") {
+    if (coursewareId && status === "ready") {
       await startCourseware(user._id, coursewareId);
     }
 
