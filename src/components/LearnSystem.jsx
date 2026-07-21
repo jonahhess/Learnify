@@ -1,4 +1,4 @@
-import { use, useState } from "react";
+import { use, useEffect, useState } from "react";
 import {
   Container,
   Title,
@@ -54,6 +54,43 @@ export default function LearnSystem() {
     ? use(getCoursesResource(user._id, coursesVersion))
     : [];
   const allCourses = [...fetchedCourses, ...addedCourses];
+
+  useEffect(() => {
+    if (!user?._id || !showNewCourses || selectedCourse || selectedNewCourse) {
+      return;
+    }
+
+    let isMounted = true;
+    let isPolling = false;
+
+    async function refreshCourses() {
+      if (isPolling) return;
+
+      try {
+        isPolling = true;
+        const latestCourses = await getCourses();
+        if (!isMounted) return;
+
+        setCoursesVersion((prev) => {
+          const next = prev + 1;
+          const key = `${user._id}:${next}`;
+          courseCache.set(key, Promise.resolve(latestCourses));
+          return next;
+        });
+      } catch (err) {
+        console.error("Failed to refresh available courses:", err);
+      } finally {
+        isPolling = false;
+      }
+    }
+
+    const intervalId = setInterval(refreshCourses, 10000);
+
+    return () => {
+      isMounted = false;
+      clearInterval(intervalId);
+    };
+  }, [user?._id, showNewCourses, selectedCourse, selectedNewCourse]);
 
   function getCurrentCourses() {
     const rawCurrentCourses = user?.myCurrentCourses || [];
