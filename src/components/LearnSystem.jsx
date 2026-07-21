@@ -13,7 +13,7 @@ import CourseList from "./CourseList.jsx";
 import CoursePage from "./CoursePage.jsx";
 import NewCoursePage from "./NewCoursePage.jsx";
 import { getCourses } from "../api/courses.js";
-import { startCourse } from "../api/users.js";
+import { startCourse, stopCourse } from "../api/users.js";
 import { generateCourseOutline } from "../api/ai.js";
 
 const courseCache = new Map();
@@ -53,6 +53,7 @@ export default function LearnSystem() {
   const [newTitle, setNewTitle] = useState("");
   const [creating, setCreating] = useState(false);
   const [coursesVersion, setCoursesVersion] = useState(0);
+  const [removingCourseId, setRemovingCourseId] = useState("");
 
   function getCourseId(value) {
     return String(value?.courseId ?? value?._id ?? value?.id ?? "");
@@ -163,6 +164,23 @@ export default function LearnSystem() {
     setCoursesVersion((prev) => prev + 1);
   }
 
+  async function handleRemoveCourse(course) {
+    const courseId = getCourseId(course);
+    if (!user?._id || !courseId) return;
+
+    setRemovingCourseId(courseId);
+    try {
+      await stopCourse(user._id, courseId);
+      await reloadUser();
+      courseCache.clear();
+      setCoursesVersion((prev) => prev + 1);
+    } catch (err) {
+      console.error("Failed to remove course:", err);
+    } finally {
+      setRemovingCourseId("");
+    }
+  }
+
   // ---- Guard for auth loading ----
   if (loading) {
     return (
@@ -252,6 +270,8 @@ export default function LearnSystem() {
       <CourseList
         courses={showNewCourses ? getAvailableCourses() : getCurrentCourses()}
         isNew={showNewCourses}
+        onRemoveCourse={!showNewCourses ? handleRemoveCourse : undefined}
+        removingCourseId={removingCourseId}
         onSelectCourse={(course) => {
           if (showNewCourses) {
             setSelectedNewCourse(course);

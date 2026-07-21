@@ -14,6 +14,13 @@ export function startCourse(userId, courseId) {
   });
 }
 
+export function stopCourse(userId, courseId) {
+  return jsonFetch(`${API_BASE_URL}/users/${userId}/courses/`, {
+    method: "DELETE",
+    body: JSON.stringify({ id: courseId }),
+  });
+}
+
 export function batchSubmitReviewCards(userId, reviewedCards) {
   return jsonFetch(`${API_BASE_URL}/users/${userId}/reviewcards`, {
     method: "POST",

@@ -1,7 +1,13 @@
-import { Card, Text, Progress } from "@mantine/core";
+import { Card, Text, Progress, Button, Group } from "@mantine/core";
 import { useAuth } from "../context/useAuth.jsx";
 
-export default function CourseCard({ course, onClick, isNew }) {
+export default function CourseCard({
+  course,
+  onClick,
+  isNew,
+  onRemove,
+  removing,
+}) {
   const { user } = useAuth();
 
   function getId(value) {
@@ -58,6 +64,23 @@ export default function CourseCard({ course, onClick, isNew }) {
             {completedCount}/{totalCount} coursewares completed
           </Text>
         </>
+      )}
+
+      {!isNew && onRemove && (
+        <Group justify="flex-end" mt="md">
+          <Button
+            color="red"
+            variant="light"
+            size="xs"
+            loading={removing}
+            onClick={(event) => {
+              event.stopPropagation();
+              onRemove(course);
+            }}
+          >
+            Remove Course
+          </Button>
+        </Group>
       )}
     </Card>
   );
