@@ -18,6 +18,14 @@ import { generateCourseOutline } from "../api/ai.js";
 
 const courseCache = new Map();
 
+function getCourseSignature(courses = []) {
+  return courses
+    .map((course) =>
+      String(course?._id ?? course?.id ?? course?.courseId ?? ""),
+    )
+    .join("|");
+}
+
 function getCoursesResource(userId, version) {
   if (!userId) return Promise.resolve([]);
 
@@ -71,6 +79,17 @@ export default function LearnSystem() {
         const latestCourses = await getCourses();
         if (!isMounted) return;
 
+        const currentKey = `${user._id}:${coursesVersion}`;
+        const cachedPromise = courseCache.get(currentKey);
+        const currentCourses = cachedPromise ? await cachedPromise : [];
+
+        if (
+          getCourseSignature(currentCourses) ===
+          getCourseSignature(latestCourses)
+        ) {
+          return;
+        }
+
         setCoursesVersion((prev) => {
           const next = prev + 1;
           const key = `${user._id}:${next}`;
@@ -90,7 +109,13 @@ export default function LearnSystem() {
       isMounted = false;
       clearInterval(intervalId);
     };
-  }, [user?._id, showNewCourses, selectedCourse, selectedNewCourse]);
+  }, [
+    user?._id,
+    showNewCourses,
+    selectedCourse,
+    selectedNewCourse,
+    coursesVersion,
+  ]);
 
   function getCurrentCourses() {
     const rawCurrentCourses = user?.myCurrentCourses || [];
