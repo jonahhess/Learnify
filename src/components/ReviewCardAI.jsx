@@ -8,10 +8,10 @@ export default function ReviewCard({ card, onAnswered }) {
 
   const answers = [
     ...card.question.incorrectAnswers,
-    card.question.correctAnswer
+    card.question.correctAnswer,
   ].sort(() => Math.random() - 0.5);
 
-  const handleAnswer = answer => {
+  const handleAnswer = (answer) => {
     const success = answer === card.question.correctAnswer;
     setCorrect(success);
     onAnswered?.({ questionId: card.question._id, success });
@@ -29,11 +29,25 @@ export default function ReviewCard({ card, onAnswered }) {
 
         {!answered ? (
           <Group grow>
-            {answers.map(ans => (
+            {answers.map((ans) => (
               <Button
                 key={ans}
                 onClick={() => handleAnswer(ans)}
                 variant="light"
+                styles={{
+                  root: {
+                    height: "auto",
+                    minHeight: 42,
+                  },
+                  label: {
+                    whiteSpace: "normal",
+                    overflowWrap: "anywhere",
+                    textAlign: "left",
+                    lineHeight: 1.25,
+                    paddingTop: 6,
+                    paddingBottom: 6,
+                  },
+                }}
               >
                 {ans}
               </Button>
