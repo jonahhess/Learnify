@@ -1,6 +1,9 @@
 import { useMemo, useState } from "react";
 import {
+  Button,
+  Collapse,
   Group,
+  Paper,
   SegmentedControl,
   SimpleGrid,
   Stack,
@@ -64,6 +67,7 @@ export default function CourseList({
   removingCourseId,
 }) {
   const [viewMode, setViewMode] = useState("grid");
+  const [showFilters, setShowFilters] = useState(false);
   const [titleFilter, setTitleFilter] = useState("");
   const [keywordFilter, setKeywordFilter] = useState("");
 
@@ -104,34 +108,53 @@ export default function CourseList({
 
   return (
     <Stack>
-      <Group justify="space-between" align="flex-end" wrap="wrap">
-        <Group wrap="wrap" grow>
-          <TextInput
-            label="Filter by course name"
-            placeholder="Search titles"
-            value={titleFilter}
-            onChange={(event) => setTitleFilter(event.currentTarget.value)}
-            w={{ base: "100%", sm: 280 }}
-          />
-          <TextInput
-            label="Filter by keywords"
-            placeholder="e.g. react, backend"
-            description="Separate multiple keywords with commas"
-            value={keywordFilter}
-            onChange={(event) => setKeywordFilter(event.currentTarget.value)}
-            w={{ base: "100%", sm: 320 }}
-          />
-        </Group>
+      <Paper withBorder p="md" radius="md">
+        <Stack gap="sm">
+          <Group justify="space-between" align="center" wrap="wrap">
+            <Group gap="xs">
+              <Text fw={600}>Courses</Text>
+              <Button
+                variant="light"
+                size="xs"
+                onClick={() => setShowFilters((value) => !value)}
+              >
+                {showFilters ? "Hide filters" : "Show filters"}
+              </Button>
+            </Group>
 
-        <SegmentedControl
-          value={viewMode}
-          onChange={setViewMode}
-          data={[
-            { label: "Grid", value: "grid" },
-            { label: "List", value: "list" },
-          ]}
-        />
-      </Group>
+            <SegmentedControl
+              value={viewMode}
+              onChange={setViewMode}
+              data={[
+                { label: "Grid", value: "grid" },
+                { label: "List", value: "list" },
+              ]}
+            />
+          </Group>
+
+          <Collapse in={showFilters}>
+            <Group wrap="wrap" grow align="flex-end">
+              <TextInput
+                label="Filter by course name"
+                placeholder="Search titles"
+                value={titleFilter}
+                onChange={(event) => setTitleFilter(event.currentTarget.value)}
+                w={{ base: "100%", sm: 280 }}
+              />
+              <TextInput
+                label="Filter by keywords"
+                placeholder="e.g. react, backend"
+                description="Separate multiple keywords with commas"
+                value={keywordFilter}
+                onChange={(event) =>
+                  setKeywordFilter(event.currentTarget.value)
+                }
+                w={{ base: "100%", sm: 320 }}
+              />
+            </Group>
+          </Collapse>
+        </Stack>
+      </Paper>
 
       <Text size="sm" c="dimmed">
         Showing {filteredCourses.length} of {courses.length} courses
