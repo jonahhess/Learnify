@@ -1,10 +1,24 @@
 import { jsonFetch } from "./auth";
 import { API_BASE_URL } from "./baseUrl.js";
 
-export function getCourses() {
-  return jsonFetch(`${API_BASE_URL}/courses`, {
+function normalizeListResponse(payload) {
+  if (Array.isArray(payload)) {
+    return payload;
+  }
+
+  if (Array.isArray(payload?.data)) {
+    return payload.data;
+  }
+
+  return [];
+}
+
+export async function getCourses() {
+  const payload = await jsonFetch(`${API_BASE_URL}/courses`, {
     method: "GET",
   });
+
+  return normalizeListResponse(payload);
 }
 
 export function getCoursewares() {
