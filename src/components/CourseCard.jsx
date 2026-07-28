@@ -1,4 +1,5 @@
 import { Badge, Button, Card, Group, Progress, Text } from "@mantine/core";
+import { useState } from "react";
 import { useAuth } from "../context/useAuth.jsx";
 
 export default function CourseCard({
@@ -10,6 +11,7 @@ export default function CourseCard({
   viewMode = "grid",
 }) {
   const { user } = useAuth();
+  const [showAllTags, setShowAllTags] = useState(false);
 
   function getId(value) {
     return String(value?.coursewareId ?? value?._id ?? value?.id ?? "");
@@ -100,6 +102,11 @@ export default function CourseCard({
   }
 
   const keywordChips = getCourseKeywords(course);
+  const maxVisibleTags = 3;
+  const hasMoreTags = keywordChips.length > maxVisibleTags;
+  const visibleTags = showAllTags
+    ? keywordChips
+    : keywordChips.slice(0, maxVisibleTags);
 
   return (
     <Card
@@ -122,13 +129,31 @@ export default function CourseCard({
             </Text>
 
             {keywordChips.length > 0 && (
-              <Group gap="xs" mb="sm">
-                {keywordChips.map((keyword) => (
-                  <Badge key={keyword} variant="light" color="gray">
-                    {keyword}
-                  </Badge>
-                ))}
-              </Group>
+              <>
+                <Group gap="xs" mb="xs">
+                  {visibleTags.map((keyword) => (
+                    <Badge key={keyword} variant="light" color="gray">
+                      {keyword}
+                    </Badge>
+                  ))}
+                </Group>
+                {hasMoreTags && (
+                  <Button
+                    variant="subtle"
+                    color="gray"
+                    size="compact-xs"
+                    px={0}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      setShowAllTags((prev) => !prev);
+                    }}
+                  >
+                    {showAllTags
+                      ? "Show less"
+                      : `Show ${keywordChips.length - maxVisibleTags} more`}
+                  </Button>
+                )}
+              </>
             )}
 
             {!isNew && totalCount > 0 && (
@@ -167,13 +192,31 @@ export default function CourseCard({
           </Text>
 
           {keywordChips.length > 0 && (
-            <Group gap="xs" mb="sm">
-              {keywordChips.map((keyword) => (
-                <Badge key={keyword} variant="light" color="gray">
-                  {keyword}
-                </Badge>
-              ))}
-            </Group>
+            <>
+              <Group gap="xs" mb="xs">
+                {visibleTags.map((keyword) => (
+                  <Badge key={keyword} variant="light" color="gray">
+                    {keyword}
+                  </Badge>
+                ))}
+              </Group>
+              {hasMoreTags && (
+                <Button
+                  variant="subtle"
+                  color="gray"
+                  size="compact-xs"
+                  px={0}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    setShowAllTags((prev) => !prev);
+                  }}
+                >
+                  {showAllTags
+                    ? "Show less"
+                    : `Show ${keywordChips.length - maxVisibleTags} more`}
+                </Button>
+              )}
+            </>
           )}
 
           {!isNew && totalCount > 0 && (
