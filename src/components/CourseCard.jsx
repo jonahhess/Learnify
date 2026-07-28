@@ -154,10 +154,6 @@ export default function CourseCard({
             {course.title}
           </Text>
 
-          <Text size="sm" c="dimmed" mb="sm">
-            {subtitle}
-          </Text>
-
           {keywordChips.length > 0 && (
             <>
               <Group gap="xs" mb="xs">
