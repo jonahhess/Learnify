@@ -19,11 +19,36 @@ import { generateCourseOutline } from "../api/ai.js";
 
 const courseCache = new Map();
 
+function normalizeIdValue(value) {
+  if (value == null) return "";
+
+  if (typeof value === "string" || typeof value === "number") {
+    return String(value).trim();
+  }
+
+  if (typeof value !== "object") {
+    return "";
+  }
+
+  const candidates = [
+    value.courseId,
+    value._id,
+    value.id,
+    value.coursewareId,
+    value.$oid,
+  ];
+
+  for (const candidate of candidates) {
+    const normalized = normalizeIdValue(candidate);
+    if (normalized) return normalized;
+  }
+
+  return "";
+}
+
 function getCourseSignature(courses = []) {
   return courses
-    .map((course) =>
-      String(course?._id ?? course?.id ?? course?.courseId ?? ""),
-    )
+    .map((course) => normalizeIdValue(course) || String(course?.title ?? ""))
     .join("|");
 }
 
@@ -92,7 +117,7 @@ export default function LearnSystem() {
   const [removingCourseId, setRemovingCourseId] = useState("");
 
   function getCourseId(value) {
-    return String(value?.courseId ?? value?._id ?? value?.id ?? "");
+    return normalizeIdValue(value);
   }
 
   const fetchedCourses = user
@@ -157,7 +182,9 @@ export default function LearnSystem() {
   function getCurrentCourses() {
     const rawCurrentCourses = user?.myCurrentCourses || [];
     const allCoursesById = new Map(
-      allCourses.map((course) => [getCourseId(course), course]),
+      allCourses
+        .map((course) => [getCourseId(course), course])
+        .filter(([courseId]) => Boolean(courseId)),
     );
 
     return rawCurrentCourses
@@ -172,10 +199,15 @@ export default function LearnSystem() {
 
   function getAvailableCourses() {
     const currentIds = new Set(
-      (user?.myCurrentCourses || []).map((course) => getCourseId(course)),
+      (user?.myCurrentCourses || [])
+        .map((course) => getCourseId(course))
+        .filter(Boolean),
     );
 
-    return allCourses.filter((course) => !currentIds.has(getCourseId(course)));
+    return allCourses.filter((course) => {
+      const courseId = getCourseId(course);
+      return !courseId || !currentIds.has(courseId);
+    });
   }
 
   async function handleGenerateCourse() {

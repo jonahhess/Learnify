@@ -13,7 +13,28 @@ import {
 import CourseCard from "./CourseCard.jsx";
 
 function getCourseId(value) {
-  return String(value?.courseId ?? value?._id ?? value?.id ?? "");
+  if (value == null) return "";
+
+  if (typeof value === "string" || typeof value === "number") {
+    return String(value).trim();
+  }
+
+  if (typeof value !== "object") return "";
+
+  const candidates = [
+    value.courseId,
+    value._id,
+    value.id,
+    value.coursewareId,
+    value.$oid,
+  ];
+
+  for (const candidate of candidates) {
+    const normalized = getCourseId(candidate);
+    if (normalized) return normalized;
+  }
+
+  return "";
 }
 
 function normalizeText(value) {
@@ -96,7 +117,7 @@ export default function CourseList({
 
   const courseCards = filteredCourses.map((course) => (
     <CourseCard
-      key={getCourseId(course)}
+      key={getCourseId(course) || getCourseTitle(course)}
       course={course}
       isNew={isNew}
       viewMode={viewMode}

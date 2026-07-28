@@ -13,12 +13,37 @@ export default function CourseCard({
   const { user } = useAuth();
   const [showAllTags, setShowAllTags] = useState(false);
 
+  function normalizeIdValue(value) {
+    if (value == null) return "";
+
+    if (typeof value === "string" || typeof value === "number") {
+      return String(value).trim();
+    }
+
+    if (typeof value !== "object") return "";
+
+    const candidates = [
+      value.coursewareId,
+      value.courseId,
+      value._id,
+      value.id,
+      value.$oid,
+    ];
+
+    for (const candidate of candidates) {
+      const normalized = normalizeIdValue(candidate);
+      if (normalized) return normalized;
+    }
+
+    return "";
+  }
+
   function getId(value) {
-    return String(value?.coursewareId ?? value?._id ?? value?.id ?? "");
+    return normalizeIdValue(value);
   }
 
   function getCourseId(value) {
-    return String(value?.courseId ?? value?._id ?? value?.id ?? "");
+    return normalizeIdValue(value);
   }
 
   const courseId = getCourseId(course);
