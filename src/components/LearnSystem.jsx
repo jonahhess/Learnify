@@ -8,6 +8,7 @@ import {
   Group,
   TextInput,
 } from "@mantine/core";
+import { notifications } from "@mantine/notifications";
 import { useAuth } from "../context/useAuth.jsx";
 import CourseList from "./CourseList.jsx";
 import CoursePage from "./CoursePage.jsx";
@@ -41,6 +42,41 @@ function getCoursesResource(userId, version) {
   }
 
   return courseCache.get(key);
+}
+
+function getReadableGenerateCourseError(err) {
+  const defaultMessage =
+    "Could not generate course right now. Please try again.";
+
+  if (!err) return defaultMessage;
+
+  const nestedMessage = err?.message;
+  if (typeof nestedMessage === "string") {
+    try {
+      const parsed = JSON.parse(nestedMessage);
+      const apiError = parsed?.error;
+      const isHighDemand =
+        apiError?.code === 503 ||
+        apiError?.status === "UNAVAILABLE" ||
+        String(apiError?.message || "")
+          .toLowerCase()
+          .includes("high demand");
+
+      if (isHighDemand) {
+        return "AI is experiencing high demand right now. Please try again in a moment.";
+      }
+
+      if (apiError?.message) return apiError.message;
+    } catch {
+      // Message is plain text, handled below.
+    }
+  }
+
+  if (err?.status === 503) {
+    return "AI is experiencing high demand right now. Please try again in a moment.";
+  }
+
+  return nestedMessage || defaultMessage;
 }
 
 export default function LearnSystem() {
@@ -150,8 +186,15 @@ export default function LearnSystem() {
       setAddedCourses((prev) => [...prev, newCourse]);
       setNewTitle("");
       setShowNewCourses(true);
+      notifications.show({
+        message: "Course generated successfully.",
+      });
     } catch (err) {
       console.error("Failed to generate course:", err);
+      notifications.show({
+        color: "red",
+        message: getReadableGenerateCourseError(err),
+      });
     } finally {
       setCreating(false);
     }
