@@ -41,7 +41,6 @@ export default function CourseCard({
   const progress =
     totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
 
-  const subtitle = "Ready to start";
   const isList = viewMode === "list";
 
   function getKeywordPartsFromString(value) {
@@ -123,38 +122,6 @@ export default function CourseCard({
             <Text fw={500} size="lg" mb="sm">
               {course.title}
             </Text>
-
-            <Text size="sm" c="dimmed" mb="sm">
-              {subtitle}
-            </Text>
-
-            {keywordChips.length > 0 && (
-              <>
-                <Group gap="xs" mb="xs">
-                  {visibleTags.map((keyword) => (
-                    <Badge key={keyword} variant="light" color="gray">
-                      {keyword}
-                    </Badge>
-                  ))}
-                </Group>
-                {hasMoreTags && (
-                  <Button
-                    variant="subtle"
-                    color="gray"
-                    size="compact-xs"
-                    px={0}
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      setShowAllTags((prev) => !prev);
-                    }}
-                  >
-                    {showAllTags
-                      ? "Show less"
-                      : `Show ${keywordChips.length - maxVisibleTags} more`}
-                  </Button>
-                )}
-              </>
-            )}
 
             {!isNew && totalCount > 0 && (
               <>
