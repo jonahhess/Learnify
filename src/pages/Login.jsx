@@ -10,7 +10,7 @@ import {
   Anchor,
   Group,
   Stack,
-  Divider,
+  Divider
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
 import { notifications } from "@mantine/notifications";
@@ -21,7 +21,7 @@ import {
   IconMail,
   IconLock,
   IconBrandGoogle,
-  IconBrandGithub,
+  IconBrandGithub
 } from "@tabler/icons-react";
 
 export default function Login() {
@@ -32,12 +32,12 @@ export default function Login() {
   const form = useForm({
     initialValues: { email: "", password: "" },
     validate: {
-      email: (v) => (/^\S+@\S+\.\S+$/.test(v) ? null : "Invalid email"),
-      password: (v) => (!v ? "Password is required" : null),
-    },
+      email: v => (/^\S+@\S+\.\S+$/.test(v) ? null : "Invalid email"),
+      password: v => (!v ? "Password is required" : null)
+    }
   });
 
-  const handleSubmit = form.onSubmit(async (values) => {
+  const handleSubmit = form.onSubmit(async values => {
     try {
       setLoading(true);
       await login(values);
@@ -54,7 +54,11 @@ export default function Login() {
   return (
     <Container
       size={420}
-      style={{ minHeight: "100vh", display: "flex", alignItems: "center" }}
+      style={{
+        minHeight: "calc(100dvh - 64px)",
+        display: "flex",
+        alignItems: "center"
+      }}
     >
       <Paper
         withBorder

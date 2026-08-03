@@ -7,7 +7,7 @@ import {
   Button,
   Group,
   Stack,
-  Center,
+  Center
 } from "@mantine/core";
 import ReviewCard from "../components/ReviewCard";
 import { batchSubmitReviewCards } from "../api/users";
@@ -20,9 +20,9 @@ export default function ReviewSystem() {
   const [deletingCardId, setDeletingCardId] = useState(null);
   const { user, loading: authLoading, reloadUser } = useAuth();
 
-  const answeredIds = new Set(results.map((item) => item._id));
+  const answeredIds = new Set(results.map(item => item._id));
   const cards = (user?.myReviewCards ?? []).filter(
-    (card) => !answeredIds.has(card._id),
+    card => !answeredIds.has(card._id)
   );
   const currentCard = cards[currentIndex] ?? null;
 
@@ -37,16 +37,16 @@ export default function ReviewSystem() {
     }
   }, [cards.length, currentIndex]);
 
-  const handleAnswered = (result) => {
-    setResults((prev) => [...prev, result]);
+  const handleAnswered = result => {
+    setResults(prev => [...prev, result]);
   };
 
   const handlePrev = () => {
-    setCurrentIndex((i) => Math.max(i - 1, 0));
+    setCurrentIndex(i => Math.max(i - 1, 0));
   };
 
   const handleNext = () => {
-    setCurrentIndex((i) => Math.min(i + 1, cards.length - 1));
+    setCurrentIndex(i => Math.min(i + 1, cards.length - 1));
   };
 
   const handleDeleteCurrent = async () => {
@@ -57,7 +57,7 @@ export default function ReviewSystem() {
     try {
       setDeletingCardId(cardId);
       await deleteReviewCard(cardId);
-      setResults((prev) => prev.filter((item) => item._id !== cardId));
+      setResults(prev => prev.filter(item => item._id !== cardId));
       await reloadUser();
     } catch (err) {
       console.error("Failed to delete review card:", err);
@@ -81,7 +81,7 @@ export default function ReviewSystem() {
 
   if (authLoading) {
     return (
-      <Container size="lg" py="xl" mt="40px">
+      <Container size="lg" py="xl">
         <Loader />
       </Container>
     );
@@ -89,7 +89,7 @@ export default function ReviewSystem() {
 
   if (!user) {
     return (
-      <Container py="xl" mt="40px">
+      <Container py="xl">
         <Title order={2}>Please log in to access your review cards.</Title>
       </Container>
     );
@@ -97,7 +97,7 @@ export default function ReviewSystem() {
 
   if (!cards.length) {
     return (
-      <Container size="lg" py="xl" mt="40px">
+      <Container size="lg" py="xl">
         <Title order={2}>Review</Title>
         <Text c="dimmed">No review cards due today 🎉</Text>
         {results.length > 0 && (
@@ -111,7 +111,7 @@ export default function ReviewSystem() {
 
   if (!currentCard) {
     return (
-      <Container size="lg" py="xl" mt="40px">
+      <Container size="lg" py="xl">
         <Loader />
       </Container>
     );
