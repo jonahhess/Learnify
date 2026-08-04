@@ -339,13 +339,15 @@ export default function ReviewSystem2() {
                     <Button
                       key={answer}
                       onClick={() => handleAnswer(currentCard, answer)}
-                      disabled={isCurrentLocked}
+                      aria-disabled={isCurrentLocked}
                       color={color}
                       variant={variant}
                       styles={{
                         root: {
                           cursor: isCurrentLocked ? "not-allowed" : "pointer",
                           pointerEvents: isCurrentLocked ? "none" : "auto",
+                          opacity: 1,
+                          filter: "none",
                         },
                         inner: {
                           whiteSpace: "normal",
