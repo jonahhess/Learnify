@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Container,
   Title,
@@ -21,7 +21,6 @@ export default function ReviewSystem() {
   const [redoAnswerStateById, setRedoAnswerStateById] = useState({});
   const [incorrectAnswerLog, setIncorrectAnswerLog] = useState([]);
   const [redoCards, setRedoCards] = useState([]);
-  const [redoAnswerById, setRedoAnswerById] = useState({});
   const [reviewSummary, setReviewSummary] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -29,13 +28,34 @@ export default function ReviewSystem() {
   const { user, loading: authLoading, reloadUser } = useAuth();
 
   const isRedoMode = redoCards.length > 0;
-  const sourceCards = isRedoMode ? redoCards : (user?.myReviewCards ?? []);
+  const sourceCards = useMemo(
+    () => (isRedoMode ? redoCards : (user?.myReviewCards ?? [])),
+    [isRedoMode, redoCards, user?.myReviewCards],
+  );
   const activeResults = isRedoMode ? redoResults : results;
   const activeAnswerStateById = isRedoMode
     ? redoAnswerStateById
     : answerStateById;
 
-  const cards = sourceCards;
+  const cards = useMemo(
+    () =>
+      sourceCards.map((card) => {
+        const options = [
+          ...(card?.question?.incorrectAnswers ?? []),
+          card?.question?.correctAnswer,
+        ].filter(Boolean);
+
+        return {
+          ...card,
+          question: {
+            ...card.question,
+            options: Array.from(new Set(options)),
+            correctAnswer: undefined,
+          },
+        };
+      }),
+    [sourceCards],
+  );
   const currentCard = cards[currentIndex] ?? null;
 
   useEffect(() => {
@@ -59,37 +79,11 @@ export default function ReviewSystem() {
     if (isRedoMode) {
       setRedoResults(upsert);
       setRedoAnswerStateById((prev) => ({ ...prev, [result._id]: result }));
-
-      if (result.success === 0) {
-        setIncorrectAnswerLog((prev) => [
-          ...prev,
-          {
-            cardId: result._id,
-            selectedAnswer: result.selectedAnswer,
-            correctAnswer: result.correctAnswer,
-            phase: "redo",
-            at: Date.now(),
-          },
-        ]);
-      }
       return;
     }
 
     setResults(upsert);
     setAnswerStateById((prev) => ({ ...prev, [result._id]: result }));
-
-    if (result.success === 0) {
-      setIncorrectAnswerLog((prev) => [
-        ...prev,
-        {
-          cardId: result._id,
-          selectedAnswer: result.selectedAnswer,
-          correctAnswer: result.correctAnswer,
-          phase: "initial",
-          at: Date.now(),
-        },
-      ]);
-    }
   };
 
   const handlePrev = () => {
@@ -127,7 +121,7 @@ export default function ReviewSystem() {
     );
 
     const nextRedoCards = [];
-    const nextAnswerById = {};
+    const incorrectIds = [];
 
     for (const item of incorrectCards) {
       const id = String(item?.id ?? "");
@@ -135,12 +129,10 @@ export default function ReviewSystem() {
       if (!id || !card) continue;
 
       nextRedoCards.push(card);
-      if (item?.correctAnswer) {
-        nextAnswerById[id] = item.correctAnswer;
-      }
+      incorrectIds.push(id);
     }
 
-    return { nextRedoCards, nextAnswerById };
+    return { nextRedoCards, incorrectIds };
   };
 
   const handleSubmit = async () => {
@@ -155,17 +147,25 @@ export default function ReviewSystem() {
         incorrectCount: response?.incorrectCount ?? 0,
       });
 
-      const { nextRedoCards, nextAnswerById } =
-        deriveIncorrectPayload(response);
+      const { nextRedoCards, incorrectIds } = deriveIncorrectPayload(response);
+
+      if (incorrectIds.length > 0) {
+        setIncorrectAnswerLog((prev) => [
+          ...prev,
+          ...incorrectIds.map((cardId) => ({
+            cardId,
+            phase: isRedoMode ? "redo" : "initial",
+            at: Date.now(),
+          })),
+        ]);
+      }
 
       if (nextRedoCards.length > 0) {
         setRedoCards(nextRedoCards);
-        setRedoAnswerById(nextAnswerById);
         setRedoResults([]);
         setRedoAnswerStateById({});
       } else {
         setRedoCards([]);
-        setRedoAnswerById({});
         setRedoResults([]);
         setRedoAnswerStateById({});
         setResults([]);
@@ -290,7 +290,6 @@ export default function ReviewSystem() {
           <ReviewCard
             key={currentCard._id}
             card={currentCard}
-            correctAnswerOverride={redoAnswerById[currentCard._id]}
             answerState={activeAnswerStateById[currentCard._id]}
             onAnswered={handleAnswered}
           />

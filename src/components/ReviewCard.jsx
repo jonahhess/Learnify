@@ -6,36 +6,31 @@ function shuffleAnswers(answers) {
   return [...answers].sort(() => Math.random() - 0.5);
 }
 
-export default function ReviewCard({
-  card,
-  onAnswered,
-  correctAnswerOverride,
-  answerState,
-}) {
-  const correctAnswer = correctAnswerOverride ?? card?.question?.correctAnswer;
+export default function ReviewCard({ card, onAnswered, answerState }) {
   const selectedAnswer = answerState?.selectedAnswer ?? null;
   const answered = selectedAnswer !== null;
-  const correct = answered && selectedAnswer === correctAnswer;
 
   const answers = useMemo(() => {
-    const base = [
-      ...(card?.question?.incorrectAnswers ?? []),
-      correctAnswer,
-    ].filter(Boolean);
+    const base =
+      card?.question?.options ??
+      [
+        ...(card?.question?.incorrectAnswers ?? []),
+        card?.question?.correctAnswer,
+      ].filter(Boolean);
     return shuffleAnswers(Array.from(new Set(base)));
-  }, [card?.question?.incorrectAnswers, correctAnswer]);
+  }, [
+    card?.question?.options,
+    card?.question?.incorrectAnswers,
+    card?.question?.correctAnswer,
+  ]);
 
   const handleAnswer = (answer) => {
     if (answered) return;
 
-    const success = answer === correctAnswer;
-
-    // tell parent result and keep selected answer for batch-mode feedback/redo history
+    // Record only the selected answer; backend decides correctness at submit time.
     onAnswered?.({
       _id: card._id,
-      success: success ? 1 : 0,
       selectedAnswer: answer,
-      correctAnswer,
     });
   };
 
@@ -45,7 +40,7 @@ export default function ReviewCard({
       radius="md"
       withBorder
       style={{
-        backgroundColor: answered ? (correct ? "#d4edda" : "#f8d7da") : "white",
+        backgroundColor: answered ? "#eef2ff" : "white",
         transition: "background-color 0.3s ease",
       }}
     >
@@ -60,23 +55,8 @@ export default function ReviewCard({
         <Stack>
           {answers.map((ans) => {
             const isSelected = ans === selectedAnswer;
-            const isCorrectOption = ans === correctAnswer;
-
-            let color = "blue";
-            let variant = "light";
-
-            if (answered) {
-              if (isCorrectOption) {
-                color = "green";
-                variant = "filled";
-              } else if (isSelected && !correct) {
-                color = "red";
-                variant = "filled";
-              } else {
-                color = "gray";
-                variant = "light";
-              }
-            }
+            const color = isSelected ? "blue" : "gray";
+            const variant = isSelected ? "filled" : "light";
 
             return (
               <Button
@@ -106,11 +86,7 @@ export default function ReviewCard({
         </Stack>
 
         {answered && (
-          <Text c={correct ? "green" : "red"}>
-            {correct
-              ? "✅ Correct!"
-              : "❌ Wrong. The correct answer is highlighted in green."}
-          </Text>
+          <Text c="dimmed">Answer recorded. Submit to grade this round.</Text>
         )}
       </Stack>
     </Card>
