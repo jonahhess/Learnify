@@ -1,4 +1,12 @@
-import { Badge, Button, Card, Group, Progress, Text } from "@mantine/core";
+import {
+  Badge,
+  Button,
+  Card,
+  Collapse,
+  Group,
+  Progress,
+  Text,
+} from "@mantine/core";
 import { useState } from "react";
 import { useAuth } from "../context/useAuth.jsx";
 
@@ -8,10 +16,11 @@ export default function CourseCard({
   isNew,
   onRemove,
   removing,
-  viewMode = "grid"
+  viewMode = "grid",
 }) {
   const { user } = useAuth();
   const [showAllTags, setShowAllTags] = useState(false);
+  const [showListDetails, setShowListDetails] = useState(false);
 
   function normalizeValue(value) {
     if (value == null) return "";
@@ -41,7 +50,7 @@ export default function CourseCard({
       value.course?._doc?._id,
       value._id,
       value.id,
-      value.$oid
+      value.$oid,
     ];
 
     for (const candidate of candidates) {
@@ -67,7 +76,7 @@ export default function CourseCard({
       value.courseware?.id,
       value._id,
       value.id,
-      value.$oid
+      value.$oid,
     ];
 
     for (const candidate of candidates) {
@@ -82,17 +91,19 @@ export default function CourseCard({
   const courseId = getCourseId(course);
   const allCoursewares = course?.coursewares || [];
 
-  const completedForCourse = (user?.myCompletedCoursewares || []).filter(cw => {
-    const cwCourseId = getCourseId(cw);
-    return !cwCourseId || cwCourseId === courseId;
-  });
+  const completedForCourse = (user?.myCompletedCoursewares || []).filter(
+    (cw) => {
+      const cwCourseId = getCourseId(cw);
+      return !cwCourseId || cwCourseId === courseId;
+    },
+  );
 
   const totalCount = allCoursewares.length;
   const completedCount = allCoursewares.length
-    ? allCoursewares.filter(cw =>
+    ? allCoursewares.filter((cw) =>
         completedForCourse.some(
-          done => getCoursewareId(done) === getCoursewareId(cw)
-        )
+          (done) => getCoursewareId(done) === getCoursewareId(cw),
+        ),
       ).length
     : completedForCourse.length;
 
@@ -104,7 +115,7 @@ export default function CourseCard({
   function getKeywordPartsFromString(value) {
     return String(value ?? "")
       .split(",")
-      .map(part => part.trim())
+      .map((part) => part.trim())
       .filter(Boolean);
   }
 
@@ -125,14 +136,14 @@ export default function CourseCard({
       value?.tag,
       value?.topics,
       value?.category,
-      value?.categories
+      value?.categories,
     ];
 
     const rawKeywords = [];
 
-    sources.forEach(source => {
+    sources.forEach((source) => {
       if (Array.isArray(source)) {
-        source.forEach(item => {
+        source.forEach((item) => {
           const label = getKeywordLabel(item);
           if (!label) return;
           rawKeywords.push(...getKeywordPartsFromString(label));
@@ -148,7 +159,7 @@ export default function CourseCard({
     const uniqueKeywords = [];
     const seen = new Set();
 
-    rawKeywords.forEach(keyword => {
+    rawKeywords.forEach((keyword) => {
       const normalized = keyword.toLowerCase();
       if (seen.has(normalized)) return;
       seen.add(normalized);
@@ -164,6 +175,10 @@ export default function CourseCard({
   const visibleTags = showAllTags
     ? keywordChips
     : keywordChips.slice(0, maxVisibleTags);
+  const hasListDetails =
+    keywordChips.length > 0 ||
+    (!isNew && totalCount > 0) ||
+    Boolean(course?.description);
 
   return (
     <Card
@@ -181,14 +196,48 @@ export default function CourseCard({
               {course.title}
             </Text>
 
-            {!isNew && totalCount > 0 && (
-              <>
-                <Progress value={progress} size="sm" radius="xl" mb="xs" />
-                <Text size="xs" c="dimmed">
-                  {completedCount}/{totalCount} coursewares completed
-                </Text>
-              </>
+            {hasListDetails && (
+              <Button
+                variant="subtle"
+                color="gray"
+                size="compact-sm"
+                px={0}
+                mb="xs"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  setShowListDetails((prev) => !prev);
+                }}
+              >
+                {showListDetails ? "Hide details" : "Show details"}
+              </Button>
             )}
+
+            <Collapse in={showListDetails}>
+              {course?.description && (
+                <Text size="sm" c="dimmed" mb="xs">
+                  {course.description}
+                </Text>
+              )}
+
+              {keywordChips.length > 0 && (
+                <Group gap="xs" mb="xs">
+                  {keywordChips.map((keyword) => (
+                    <Badge key={keyword} variant="light" color="gray">
+                      {keyword}
+                    </Badge>
+                  ))}
+                </Group>
+              )}
+
+              {!isNew && totalCount > 0 && (
+                <>
+                  <Progress value={progress} size="sm" radius="xl" mb="xs" />
+                  <Text size="xs" c="dimmed">
+                    {completedCount}/{totalCount} coursewares completed
+                  </Text>
+                </>
+              )}
+            </Collapse>
           </div>
 
           {!isNew && onRemove && (
@@ -197,7 +246,7 @@ export default function CourseCard({
               variant="light"
               size="xs"
               loading={removing}
-              onClick={event => {
+              onClick={(event) => {
                 event.stopPropagation();
                 onRemove(course);
               }}
@@ -215,7 +264,7 @@ export default function CourseCard({
           {keywordChips.length > 0 && (
             <>
               <Group gap="xs" mb="xs">
-                {visibleTags.map(keyword => (
+                {visibleTags.map((keyword) => (
                   <Badge key={keyword} variant="light" color="gray">
                     {keyword}
                   </Badge>
@@ -227,9 +276,9 @@ export default function CourseCard({
                   color="gray"
                   size="compact-xs"
                   px={0}
-                  onClick={event => {
+                  onClick={(event) => {
                     event.stopPropagation();
-                    setShowAllTags(prev => !prev);
+                    setShowAllTags((prev) => !prev);
                   }}
                 >
                   {showAllTags
@@ -256,7 +305,7 @@ export default function CourseCard({
                 variant="light"
                 size="xs"
                 loading={removing}
-                onClick={event => {
+                onClick={(event) => {
                   event.stopPropagation();
                   onRemove(course);
                 }}
