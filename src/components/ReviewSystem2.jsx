@@ -272,7 +272,7 @@ export default function ReviewSystem2() {
                   const isCorrect =
                     currentCard.question.correctAnswer === answer;
 
-                  let color = "gray";
+                  let color = "blue";
                   let variant = "light";
 
                   if (isCurrentLocked) {
@@ -310,18 +310,6 @@ export default function ReviewSystem2() {
                   );
                 })}
               </Stack>
-
-              {isCurrentLocked && currentState?.syncStatus === "pending" && (
-                <Text size="sm" c="dimmed">
-                  Saving answer...
-                </Text>
-              )}
-
-              {isCurrentLocked && currentState?.syncStatus === "success" && (
-                <Text size="sm" c="dimmed">
-                  Answer saved.
-                </Text>
-              )}
 
               {isCurrentLocked && (
                 <Text fw={700} c={currentState?.isCorrect ? "green" : "red"}>
