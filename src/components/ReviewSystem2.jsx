@@ -66,15 +66,18 @@ export default function ReviewSystem2() {
   }, [user?.myReviewCards]);
 
   const totalCards = cards.length;
-  const reviewedCount = useMemo(
+  const waitingCount = useMemo(
     () =>
-      cards.reduce((count, card) => {
-        const state = answerStateById[card._id];
-        return state?.syncStatus === "success" ? count + 1 : count;
-      }, 0),
-    [cards, answerStateById],
+      Math.max(
+        totalCards -
+          cards.reduce((count, card) => {
+            const state = answerStateById[card._id];
+            return state?.syncStatus === "success" ? count + 1 : count;
+          }, 0),
+        0,
+      ),
+    [cards, totalCards, answerStateById],
   );
-  const waitingCount = Math.max(totalCards - reviewedCount, 0);
 
   const answeredCount = useMemo(
     () =>
@@ -84,14 +87,6 @@ export default function ReviewSystem2() {
       }, 0),
     [cards, answerStateById],
   );
-
-  const firstUnansweredIndex = useMemo(() => {
-    for (let i = 0; i < cards.length; i += 1) {
-      const state = answerStateById[cards[i]._id];
-      if (!state?.locked) return i;
-    }
-    return -1;
-  }, [cards, answerStateById]);
 
   const currentCard = cards[currentIndex] ?? null;
 
