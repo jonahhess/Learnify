@@ -6,7 +6,7 @@ import {
   Center,
   Button,
   Group,
-  TextInput,
+  TextInput
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { useAuth } from "../context/useAuth.jsx";
@@ -35,7 +35,7 @@ function normalizeIdValue(value) {
     value._id,
     value.id,
     value.coursewareId,
-    value.$oid,
+    value.$oid
   ];
 
   for (const candidate of candidates) {
@@ -48,7 +48,7 @@ function normalizeIdValue(value) {
 
 function getCourseSignature(courses = []) {
   return courses
-    .map((course) => normalizeIdValue(course) || String(course?.title ?? ""))
+    .map(course => normalizeIdValue(course) || String(course?.title ?? ""))
     .join("|");
 }
 
@@ -59,10 +59,10 @@ function getCoursesResource(userId, version) {
   if (!courseCache.has(key)) {
     courseCache.set(
       key,
-      getCourses().catch((err) => {
+      getCourses().catch(err => {
         console.error("Failed to load courses:", err);
         return [];
-      }),
+      })
     );
   }
 
@@ -152,7 +152,7 @@ export default function LearnSystem() {
           return;
         }
 
-        setCoursesVersion((prev) => {
+        setCoursesVersion(prev => {
           const next = prev + 1;
           const key = `${user._id}:${next}`;
           courseCache.set(key, Promise.resolve(latestCourses));
@@ -176,19 +176,19 @@ export default function LearnSystem() {
     showNewCourses,
     selectedCourse,
     selectedNewCourse,
-    coursesVersion,
+    coursesVersion
   ]);
 
   function getCurrentCourses() {
     const rawCurrentCourses = user?.myCurrentCourses || [];
     const allCoursesById = new Map(
       allCourses
-        .map((course) => [getCourseId(course), course])
-        .filter(([courseId]) => Boolean(courseId)),
+        .map(course => [getCourseId(course), course])
+        .filter(([courseId]) => Boolean(courseId))
     );
 
     return rawCurrentCourses
-      .map((course) => {
+      .map(course => {
         const courseId = getCourseId(course);
         if (!courseId) return null;
 
@@ -200,11 +200,11 @@ export default function LearnSystem() {
   function getAvailableCourses() {
     const currentIds = new Set(
       (user?.myCurrentCourses || [])
-        .map((course) => getCourseId(course))
-        .filter(Boolean),
+        .map(course => getCourseId(course))
+        .filter(Boolean)
     );
 
-    return allCourses.filter((course) => {
+    return allCourses.filter(course => {
       const courseId = getCourseId(course);
       return !courseId || !currentIds.has(courseId);
     });
@@ -215,17 +215,17 @@ export default function LearnSystem() {
     try {
       setCreating(true);
       const newCourse = await generateCourseOutline({ title: newTitle });
-      setAddedCourses((prev) => [...prev, newCourse]);
+      setAddedCourses(prev => [...prev, newCourse]);
       setNewTitle("");
       setShowNewCourses(true);
       notifications.show({
-        message: "Course generated successfully.",
+        message: "Course generated successfully."
       });
     } catch (err) {
       console.error("Failed to generate course:", err);
       notifications.show({
         color: "red",
-        message: getReadableGenerateCourseError(err),
+        message: getReadableGenerateCourseError(err)
       });
     } finally {
       setCreating(false);
@@ -236,7 +236,7 @@ export default function LearnSystem() {
     setSelectedCourse(null);
     await reloadUser();
     courseCache.clear();
-    setCoursesVersion((prev) => prev + 1);
+    setCoursesVersion(prev => prev + 1);
   }
 
   async function handleRemoveCourse(course) {
@@ -248,7 +248,7 @@ export default function LearnSystem() {
       await stopCourse(user._id, courseId);
       await reloadUser();
       courseCache.clear();
-      setCoursesVersion((prev) => prev + 1);
+      setCoursesVersion(prev => prev + 1);
     } catch (err) {
       console.error("Failed to remove course:", err);
     } finally {
@@ -269,7 +269,7 @@ export default function LearnSystem() {
   // ---- User not logged in ----
   if (!user) {
     return (
-      <Container py="xl" mt="40px">
+      <Container py="xl">
         <Title order={2}>Please log in to access your courses.</Title>
       </Container>
     );
@@ -278,7 +278,7 @@ export default function LearnSystem() {
   // ---- Current Course Selected ----
   if (selectedCourse) {
     return (
-      <Container size="lg" py="xl" mt="40px">
+      <Container size="lg" py="xl">
         <Button variant="subtle" mb="md" onClick={handleBackToCourses}>
           ← Back to Courses
         </Button>
@@ -315,7 +315,7 @@ export default function LearnSystem() {
               await startCourse(user._id, selectedNewCourse._id);
               await reloadUser();
               courseCache.clear();
-              setCoursesVersion((prev) => prev + 1);
+              setCoursesVersion(prev => prev + 1);
               setShowNewCourses(false);
               setSelectedNewCourse(null);
             } catch (err) {
@@ -336,7 +336,7 @@ export default function LearnSystem() {
         </Title>
         <Button
           variant="light"
-          onClick={() => setShowNewCourses((prev) => !prev)}
+          onClick={() => setShowNewCourses(prev => !prev)}
         >
           {showNewCourses ? "← Back" : "+ New Course"}
         </Button>
@@ -347,7 +347,7 @@ export default function LearnSystem() {
         isNew={showNewCourses}
         onRemoveCourse={!showNewCourses ? handleRemoveCourse : undefined}
         removingCourseId={removingCourseId}
-        onSelectCourse={(course) => {
+        onSelectCourse={course => {
           if (showNewCourses) {
             setSelectedNewCourse(course);
           } else {
@@ -361,7 +361,7 @@ export default function LearnSystem() {
           <TextInput
             placeholder="Enter course title..."
             value={newTitle}
-            onChange={(e) => setNewTitle(e.currentTarget.value)}
+            onChange={e => setNewTitle(e.currentTarget.value)}
             style={{ flex: 1 }}
           />
           <Button onClick={handleGenerateCourse} loading={creating}>

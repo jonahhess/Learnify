@@ -8,12 +8,51 @@ export default function CourseCard({
   isNew,
   onRemove,
   removing,
-  viewMode = "grid",
+  viewMode = "grid"
 }) {
   const { user } = useAuth();
   const [showAllTags, setShowAllTags] = useState(false);
 
-  function normalizeIdValue(value) {
+  function normalizeValue(value) {
+    if (value == null) return "";
+
+    if (typeof value === "string" || typeof value === "number") {
+      return String(value).trim();
+    }
+
+    if (typeof value !== "object") return "";
+
+    return "";
+  }
+
+  function getCourseId(value) {
+    if (value == null) return "";
+
+    if (typeof value === "string" || typeof value === "number") {
+      return String(value).trim();
+    }
+
+    if (typeof value !== "object") return "";
+
+    const candidates = [
+      value.courseId,
+      value.course?._id,
+      value.course?.id,
+      value.course?._doc?._id,
+      value._id,
+      value.id,
+      value.$oid
+    ];
+
+    for (const candidate of candidates) {
+      const normalized = normalizeValue(candidate) || getCourseId(candidate);
+      if (normalized) return normalized;
+    }
+
+    return "";
+  }
+
+  function getCoursewareId(value) {
     if (value == null) return "";
 
     if (typeof value === "string" || typeof value === "number") {
@@ -24,42 +63,36 @@ export default function CourseCard({
 
     const candidates = [
       value.coursewareId,
-      value.courseId,
+      value.courseware?._id,
+      value.courseware?.id,
       value._id,
       value.id,
-      value.$oid,
+      value.$oid
     ];
 
     for (const candidate of candidates) {
-      const normalized = normalizeIdValue(candidate);
+      const normalized =
+        normalizeValue(candidate) || getCoursewareId(candidate);
       if (normalized) return normalized;
     }
 
     return "";
   }
 
-  function getId(value) {
-    return normalizeIdValue(value);
-  }
-
-  function getCourseId(value) {
-    return normalizeIdValue(value);
-  }
-
   const courseId = getCourseId(course);
   const allCoursewares = course?.coursewares || [];
 
-  const completedForCourse = (user?.myCompletedCoursewares || []).filter(
-    (cw) => {
-      const cwCourseId = getCourseId(cw);
-      return !cwCourseId || cwCourseId === courseId;
-    },
-  );
+  const completedForCourse = (user?.myCompletedCoursewares || []).filter(cw => {
+    const cwCourseId = getCourseId(cw);
+    return !cwCourseId || cwCourseId === courseId;
+  });
 
   const totalCount = allCoursewares.length;
   const completedCount = allCoursewares.length
-    ? allCoursewares.filter((cw) =>
-        completedForCourse.some((done) => getId(done) === getId(cw)),
+    ? allCoursewares.filter(cw =>
+        completedForCourse.some(
+          done => getCoursewareId(done) === getCoursewareId(cw)
+        )
       ).length
     : completedForCourse.length;
 
@@ -71,7 +104,7 @@ export default function CourseCard({
   function getKeywordPartsFromString(value) {
     return String(value ?? "")
       .split(",")
-      .map((part) => part.trim())
+      .map(part => part.trim())
       .filter(Boolean);
   }
 
@@ -92,14 +125,14 @@ export default function CourseCard({
       value?.tag,
       value?.topics,
       value?.category,
-      value?.categories,
+      value?.categories
     ];
 
     const rawKeywords = [];
 
-    sources.forEach((source) => {
+    sources.forEach(source => {
       if (Array.isArray(source)) {
-        source.forEach((item) => {
+        source.forEach(item => {
           const label = getKeywordLabel(item);
           if (!label) return;
           rawKeywords.push(...getKeywordPartsFromString(label));
@@ -115,7 +148,7 @@ export default function CourseCard({
     const uniqueKeywords = [];
     const seen = new Set();
 
-    rawKeywords.forEach((keyword) => {
+    rawKeywords.forEach(keyword => {
       const normalized = keyword.toLowerCase();
       if (seen.has(normalized)) return;
       seen.add(normalized);
@@ -164,7 +197,7 @@ export default function CourseCard({
               variant="light"
               size="xs"
               loading={removing}
-              onClick={(event) => {
+              onClick={event => {
                 event.stopPropagation();
                 onRemove(course);
               }}
@@ -182,7 +215,7 @@ export default function CourseCard({
           {keywordChips.length > 0 && (
             <>
               <Group gap="xs" mb="xs">
-                {visibleTags.map((keyword) => (
+                {visibleTags.map(keyword => (
                   <Badge key={keyword} variant="light" color="gray">
                     {keyword}
                   </Badge>
@@ -194,9 +227,9 @@ export default function CourseCard({
                   color="gray"
                   size="compact-xs"
                   px={0}
-                  onClick={(event) => {
+                  onClick={event => {
                     event.stopPropagation();
-                    setShowAllTags((prev) => !prev);
+                    setShowAllTags(prev => !prev);
                   }}
                 >
                   {showAllTags
@@ -223,7 +256,7 @@ export default function CourseCard({
                 variant="light"
                 size="xs"
                 loading={removing}
-                onClick={(event) => {
+                onClick={event => {
                   event.stopPropagation();
                   onRemove(course);
                 }}

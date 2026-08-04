@@ -183,7 +183,7 @@ export default function ReviewSystem() {
 
   if (authLoading) {
     return (
-      <Container size="lg" py="xl" mt="40px">
+      <Container size="lg" py="xl">
         <Loader />
       </Container>
     );
@@ -191,7 +191,7 @@ export default function ReviewSystem() {
 
   if (!user) {
     return (
-      <Container py="xl" mt="40px">
+      <Container py="xl">
         <Title order={2}>Please log in to access your review cards.</Title>
       </Container>
     );
@@ -234,7 +234,7 @@ export default function ReviewSystem() {
 
   if (!currentCard) {
     return (
-      <Container size="lg" py="xl" mt="40px">
+      <Container size="lg" py="xl">
         <Loader />
       </Container>
     );

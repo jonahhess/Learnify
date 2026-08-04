@@ -7,7 +7,7 @@ import {
   PasswordInput,
   Button,
   Anchor,
-  Group,
+  Group
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
 import { notifications } from "@mantine/notifications";
@@ -23,13 +23,13 @@ export default function Signup() {
   const form = useForm({
     initialValues: { name: "", email: "", password: "" },
     validate: {
-      name: (v) => (v.trim().length < 2 ? "Name is too short" : null),
-      email: (v) => (/^\S+@\S+\.\S+$/.test(v) ? null : "Invalid email"),
-      password: (v) => (v.length < 6 ? "Use at least 6 characters" : null),
-    },
+      name: v => (v.trim().length < 2 ? "Name is too short" : null),
+      email: v => (/^\S+@\S+\.\S+$/.test(v) ? null : "Invalid email"),
+      password: v => (v.length < 6 ? "Use at least 6 characters" : null)
+    }
   });
 
-  const handleSubmit = form.onSubmit(async (values) => {
+  const handleSubmit = form.onSubmit(async values => {
     try {
       setLoading(true);
       await signup(values);
@@ -44,7 +44,7 @@ export default function Signup() {
   });
 
   return (
-    <Container size="xs" py="xl" mt="40px">
+    <Container size="xs" py="xl">
       <Paper withBorder shadow="sm" p="lg" radius="md">
         <Title order={2} mb="md">
           Create your account
