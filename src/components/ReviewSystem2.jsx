@@ -9,6 +9,9 @@ import {
   Center,
   Card,
   Badge,
+  Collapse,
+  Switch,
+  Slider,
 } from "@mantine/core";
 import { useAuth } from "../context/useAuth.jsx";
 import { submitReviewCardAnswer } from "../api/users";
@@ -36,8 +39,9 @@ export default function ReviewSystem2() {
 
   const [answerStateById, setAnswerStateById] = useState({});
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [autoContinue] = useState(true);
-  const [autoContinueDelayMs] = useState(700);
+  const [autoContinue, setAutoContinue] = useState(true);
+  const [autoContinueDelayMs, setAutoContinueDelayMs] = useState(700);
+  const [showAutoControls, setShowAutoControls] = useState(false);
   const [ended, setEnded] = useState(false);
   const autoContinueTimerRef = useRef(null);
 
@@ -246,6 +250,43 @@ export default function ReviewSystem2() {
     <Container size="lg" py="xl">
       <Stack gap="md">
         <Text fw={700}>Cards Remaining: {waitingCount}</Text>
+
+        <Button
+          variant="default"
+          onClick={() => setShowAutoControls((prev) => !prev)}
+        >
+          {showAutoControls
+            ? "Hide Auto-Continue Controls"
+            : "Show Auto-Continue Controls"}
+        </Button>
+
+        <Collapse in={showAutoControls}>
+          <Card withBorder radius="md" p="md">
+            <Stack gap="sm">
+              <Switch
+                label="Auto-continue"
+                checked={autoContinue}
+                onChange={(event) =>
+                  setAutoContinue(event.currentTarget.checked)
+                }
+              />
+
+              <Text size="sm" c="dimmed">
+                Delay: {autoContinueDelayMs}ms
+              </Text>
+
+              <Slider
+                min={0}
+                max={2000}
+                step={100}
+                value={autoContinueDelayMs}
+                onChange={setAutoContinueDelayMs}
+                disabled={!autoContinue}
+                label={(value) => `${value}ms`}
+              />
+            </Stack>
+          </Card>
+        </Collapse>
 
         <Center>
           <Card
