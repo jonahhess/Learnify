@@ -118,6 +118,13 @@ export default function ReviewSystem2() {
     setEnded(true);
   };
 
+  const handleNextUnanswered = () => {
+    setCurrentIndex((prevIndex) => {
+      const target = nextUnansweredIndex(cards, answerStateById, prevIndex);
+      return target === -1 ? prevIndex : target;
+    });
+  };
+
   const handleAnswer = async (card, selectedAnswer) => {
     if (!user?._id || !card?._id) return;
 
@@ -362,6 +369,10 @@ export default function ReviewSystem2() {
                 <Text size="sm" c="yellow">
                   Sync failed. Card remains locked for this session.
                 </Text>
+              )}
+
+              {!autoContinue && isCurrentLocked && waitingCount > 0 && (
+                <Button onClick={handleNextUnanswered}>Next</Button>
               )}
             </Stack>
           </Card>
