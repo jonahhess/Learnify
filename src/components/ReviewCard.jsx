@@ -1,22 +1,42 @@
 // ReviewCard.jsx
 import { Card, Text, Button, Group, Badge, Stack } from "@mantine/core";
-import { useState } from "react";
+import { useMemo } from "react";
 
-export default function ReviewCard({ card, onAnswered }) {
-  const [correct, setCorrect] = useState(null);
-  const answered = correct !== null;
+function shuffleAnswers(answers) {
+  return [...answers].sort(() => Math.random() - 0.5);
+}
 
-  const answers = [
-    ...card.question.incorrectAnswers,
-    card.question.correctAnswer
-  ].sort(() => Math.random() - 0.5);
+export default function ReviewCard({
+  card,
+  onAnswered,
+  correctAnswerOverride,
+  answerState,
+}) {
+  const correctAnswer = correctAnswerOverride ?? card?.question?.correctAnswer;
+  const selectedAnswer = answerState?.selectedAnswer ?? null;
+  const answered = selectedAnswer !== null;
+  const correct = answered && selectedAnswer === correctAnswer;
 
-  const handleAnswer = answer => {
-    const success = answer === card.question.correctAnswer;
-    setCorrect(success);
+  const answers = useMemo(() => {
+    const base = [
+      ...(card?.question?.incorrectAnswers ?? []),
+      correctAnswer,
+    ].filter(Boolean);
+    return shuffleAnswers(Array.from(new Set(base)));
+  }, [card?.question?.incorrectAnswers, correctAnswer]);
 
-    // tell parent result (_id + success flag)
-    onAnswered?.({ _id: card._id, success: success ? 1 : 0 });
+  const handleAnswer = (answer) => {
+    if (answered) return;
+
+    const success = answer === correctAnswer;
+
+    // tell parent result and keep selected answer for batch-mode feedback/redo history
+    onAnswered?.({
+      _id: card._id,
+      success: success ? 1 : 0,
+      selectedAnswer: answer,
+      correctAnswer,
+    });
   };
 
   return (
@@ -26,7 +46,7 @@ export default function ReviewCard({ card, onAnswered }) {
       withBorder
       style={{
         backgroundColor: answered ? (correct ? "#d4edda" : "#f8d7da") : "white",
-        transition: "background-color 0.3s ease"
+        transition: "background-color 0.3s ease",
       }}
     >
       <Stack gap="sm">
@@ -37,36 +57,59 @@ export default function ReviewCard({ card, onAnswered }) {
           </Badge>
         </Group>
 
-        {!answered ? (
-          <Stack>
-            {answers.map(ans => (
+        <Stack>
+          {answers.map((ans) => {
+            const isSelected = ans === selectedAnswer;
+            const isCorrectOption = ans === correctAnswer;
+
+            let color = "blue";
+            let variant = "light";
+
+            if (answered) {
+              if (isCorrectOption) {
+                color = "green";
+                variant = "filled";
+              } else if (isSelected && !correct) {
+                color = "red";
+                variant = "filled";
+              } else {
+                color = "gray";
+                variant = "light";
+              }
+            }
+
+            return (
               <Button
                 key={ans}
                 onClick={() => handleAnswer(ans)}
-                variant="light"
+                variant={variant}
+                color={color}
                 w="100%"
+                disabled={answered}
                 styles={{
                   root: {
-                    flexWrap: "wrap"
+                    flexWrap: "wrap",
                   },
                   inner: {
                     whiteSpace: "normal",
-                    textAlign: "center"
+                    textAlign: "center",
                   },
                   label: {
-                    whiteSpace: "normal"
-                  }
+                    whiteSpace: "normal",
+                  },
                 }}
               >
                 {ans}
               </Button>
-            ))}
-          </Stack>
-        ) : (
+            );
+          })}
+        </Stack>
+
+        {answered && (
           <Text c={correct ? "green" : "red"}>
             {correct
               ? "✅ Correct!"
-              : "❌ Wrong. Correct: " + card.question.correctAnswer}
+              : "❌ Wrong. The correct answer is highlighted in green."}
           </Text>
         )}
       </Stack>

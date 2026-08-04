@@ -16,14 +16,26 @@ import { useAuth } from "../context/useAuth.jsx";
 
 export default function ReviewSystem() {
   const [results, setResults] = useState([]);
+  const [redoResults, setRedoResults] = useState([]);
+  const [answerStateById, setAnswerStateById] = useState({});
+  const [redoAnswerStateById, setRedoAnswerStateById] = useState({});
+  const [incorrectAnswerLog, setIncorrectAnswerLog] = useState([]);
+  const [redoCards, setRedoCards] = useState([]);
+  const [redoAnswerById, setRedoAnswerById] = useState({});
+  const [reviewSummary, setReviewSummary] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [deletingCardId, setDeletingCardId] = useState(null);
   const { user, loading: authLoading, reloadUser } = useAuth();
 
-  const answeredIds = new Set(results.map((item) => item._id));
-  const cards = (user?.myReviewCards ?? []).filter(
-    (card) => !answeredIds.has(card._id),
-  );
+  const isRedoMode = redoCards.length > 0;
+  const sourceCards = isRedoMode ? redoCards : (user?.myReviewCards ?? []);
+  const activeResults = isRedoMode ? redoResults : results;
+  const activeAnswerStateById = isRedoMode
+    ? redoAnswerStateById
+    : answerStateById;
+
+  const cards = sourceCards;
   const currentCard = cards[currentIndex] ?? null;
 
   useEffect(() => {
@@ -38,7 +50,46 @@ export default function ReviewSystem() {
   }, [cards.length, currentIndex]);
 
   const handleAnswered = (result) => {
-    setResults((prev) => [...prev, result]);
+    const upsert = (prev) => {
+      const next = prev.filter((item) => item._id !== result._id);
+      next.push(result);
+      return next;
+    };
+
+    if (isRedoMode) {
+      setRedoResults(upsert);
+      setRedoAnswerStateById((prev) => ({ ...prev, [result._id]: result }));
+
+      if (result.success === 0) {
+        setIncorrectAnswerLog((prev) => [
+          ...prev,
+          {
+            cardId: result._id,
+            selectedAnswer: result.selectedAnswer,
+            correctAnswer: result.correctAnswer,
+            phase: "redo",
+            at: Date.now(),
+          },
+        ]);
+      }
+      return;
+    }
+
+    setResults(upsert);
+    setAnswerStateById((prev) => ({ ...prev, [result._id]: result }));
+
+    if (result.success === 0) {
+      setIncorrectAnswerLog((prev) => [
+        ...prev,
+        {
+          cardId: result._id,
+          selectedAnswer: result.selectedAnswer,
+          correctAnswer: result.correctAnswer,
+          phase: "initial",
+          at: Date.now(),
+        },
+      ]);
+    }
   };
 
   const handlePrev = () => {
@@ -66,16 +117,67 @@ export default function ReviewSystem() {
     }
   };
 
+  const deriveIncorrectPayload = (response) => {
+    const incorrectCards = Array.isArray(response?.incorrectCards)
+      ? response.incorrectCards
+      : [];
+
+    const idToCard = new Map(
+      sourceCards.map((card) => [String(card._id), card]),
+    );
+
+    const nextRedoCards = [];
+    const nextAnswerById = {};
+
+    for (const item of incorrectCards) {
+      const id = String(item?.id ?? "");
+      const card = idToCard.get(id);
+      if (!id || !card) continue;
+
+      nextRedoCards.push(card);
+      if (item?.correctAnswer) {
+        nextAnswerById[id] = item.correctAnswer;
+      }
+    }
+
+    return { nextRedoCards, nextAnswerById };
+  };
+
   const handleSubmit = async () => {
-    if (!user?._id || results.length === 0) return;
+    if (!user?._id || activeResults.length === 0 || submitting) return;
 
     try {
-      await batchSubmitReviewCards(user._id, results);
-      await reloadUser();
-      setResults([]);
+      setSubmitting(true);
+      const response = await batchSubmitReviewCards(user._id, activeResults);
+
+      setReviewSummary({
+        reviewedCount: response?.reviewedCount ?? activeResults.length,
+        incorrectCount: response?.incorrectCount ?? 0,
+      });
+
+      const { nextRedoCards, nextAnswerById } =
+        deriveIncorrectPayload(response);
+
+      if (nextRedoCards.length > 0) {
+        setRedoCards(nextRedoCards);
+        setRedoAnswerById(nextAnswerById);
+        setRedoResults([]);
+        setRedoAnswerStateById({});
+      } else {
+        setRedoCards([]);
+        setRedoAnswerById({});
+        setRedoResults([]);
+        setRedoAnswerStateById({});
+        setResults([]);
+        setAnswerStateById({});
+        await reloadUser();
+      }
+
       setCurrentIndex(0);
     } catch (err) {
       console.error("Batch submit failed:", err);
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -98,11 +200,32 @@ export default function ReviewSystem() {
   if (!cards.length) {
     return (
       <Container size="lg" py="xl" mt="40px">
-        <Title order={2}>Review</Title>
-        <Text c="dimmed">No review cards due today 🎉</Text>
-        {results.length > 0 && (
+        <Title order={2}>
+          {isRedoMode ? "Redo Incorrect Cards" : "Review"}
+        </Title>
+        {isRedoMode ? (
+          <Text c="dimmed">
+            You have finished this redo round. Submit to continue.
+          </Text>
+        ) : (
+          <Text c="dimmed">No review cards due today 🎉</Text>
+        )}
+        {reviewSummary && (
+          <Text mt="sm">
+            Last submit: {reviewSummary.reviewedCount} reviewed,{" "}
+            {reviewSummary.incorrectCount} incorrect.
+          </Text>
+        )}
+        {incorrectAnswerLog.length > 0 && (
+          <Text size="sm" c="dimmed" mt="xs">
+            Incorrect answers tracked this session: {incorrectAnswerLog.length}
+          </Text>
+        )}
+        {activeResults.length > 0 && (
           <Button mt="md" onClick={handleSubmit}>
-            Submit Results
+            {isRedoMode
+              ? `Submit ${activeResults.length} Redo Result${activeResults.length === 1 ? "" : "s"}`
+              : `Submit ${activeResults.length} Result${activeResults.length === 1 ? "" : "s"}`}
           </Button>
         )}
       </Container>
@@ -120,12 +243,23 @@ export default function ReviewSystem() {
   return (
     <Container size="lg" py="xl">
       <Title order={2} mb="lg">
-        Review
+        {isRedoMode ? "Redo Incorrect Cards" : "Review"}
       </Title>
       <Stack gap="md">
         <Text c="dimmed">
-          Card {currentIndex + 1} of {cards.length}
+          {isRedoMode ? "Redo" : "Card"} {currentIndex + 1} of {cards.length}
         </Text>
+        {reviewSummary && (
+          <Text size="sm" c="dimmed">
+            Last submit: {reviewSummary.reviewedCount} reviewed,{" "}
+            {reviewSummary.incorrectCount} incorrect.
+          </Text>
+        )}
+        {incorrectAnswerLog.length > 0 && (
+          <Text size="sm" c="dimmed">
+            Incorrect answers tracked this session: {incorrectAnswerLog.length}
+          </Text>
+        )}
         <Group justify="space-between" align="center">
           <Button
             variant="default"
@@ -146,7 +280,7 @@ export default function ReviewSystem() {
             variant="light"
             onClick={handleDeleteCurrent}
             loading={deletingCardId === currentCard._id}
-            disabled={Boolean(deletingCardId)}
+            disabled={Boolean(deletingCardId) || isRedoMode}
           >
             Delete This Card
           </Button>
@@ -156,13 +290,17 @@ export default function ReviewSystem() {
           <ReviewCard
             key={currentCard._id}
             card={currentCard}
+            correctAnswerOverride={redoAnswerById[currentCard._id]}
+            answerState={activeAnswerStateById[currentCard._id]}
             onAnswered={handleAnswered}
           />
         </Center>
       </Stack>
-      {results.length > 0 && (
-        <Button mt="lg" onClick={handleSubmit}>
-          Submit {results.length} Results
+      {activeResults.length > 0 && (
+        <Button mt="lg" onClick={handleSubmit} loading={submitting}>
+          {isRedoMode
+            ? `Submit ${activeResults.length} Redo Result${activeResults.length === 1 ? "" : "s"}`
+            : `Submit ${activeResults.length} Result${activeResults.length === 1 ? "" : "s"}`}
         </Button>
       )}
     </Container>
