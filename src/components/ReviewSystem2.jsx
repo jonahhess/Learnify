@@ -259,12 +259,14 @@ export default function ReviewSystem2() {
         <Text fw={700}>Cards Remaining: {waitingCount}</Text>
 
         <Button
-          variant="default"
+          variant="subtle"
+          color="gray"
+          size="compact-sm"
+          px={0}
+          style={{ alignSelf: "flex-start" }}
           onClick={() => setShowAutoControls((prev) => !prev)}
         >
-          {showAutoControls
-            ? "Hide Auto-Continue Controls"
-            : "Show Auto-Continue Controls"}
+          {showAutoControls ? "Hide Settings" : "Show Settings"}
         </Button>
 
         <Collapse in={showAutoControls}>
