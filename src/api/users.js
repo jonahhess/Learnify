@@ -27,3 +27,10 @@ export function batchSubmitReviewCards(userId, reviewedCards) {
     body: JSON.stringify({ reviewedCards }),
   });
 }
+
+export function submitReviewCardAnswer(userId, reviewedCard) {
+  return jsonFetch(`${API_BASE_URL}/users/${userId}/reviewcards`, {
+    method: "POST",
+    body: JSON.stringify({ reviewedCard }),
+  });
+}

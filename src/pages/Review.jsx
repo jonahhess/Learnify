@@ -1,6 +1,6 @@
 import { Container } from "@mantine/core";
 import { Navigate } from "react-router-dom";
-import ReviewSystem from "../components/ReviewSystem.jsx";
+import ReviewSystem from "../components/ReviewSystem2.jsx";
 import { useAuth } from "../context/useAuth.jsx";
 
 export default function Review() {
