@@ -1,18 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Container,
-  Title,
   Loader,
   Text,
   Button,
-  Group,
   Stack,
   Center,
   Card,
   Badge,
-  Switch,
-  Slider,
-  Alert,
 } from "@mantine/core";
 import { useAuth } from "../context/useAuth.jsx";
 import { submitReviewCardAnswer } from "../api/users";
@@ -40,8 +35,8 @@ export default function ReviewSystem2() {
 
   const [answerStateById, setAnswerStateById] = useState({});
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [autoContinue, setAutoContinue] = useState(true);
-  const [autoContinueDelayMs, setAutoContinueDelayMs] = useState(700);
+  const [autoContinue] = useState(true);
+  const [autoContinueDelayMs] = useState(700);
   const [ended, setEnded] = useState(false);
   const autoContinueTimerRef = useRef(null);
 
@@ -113,20 +108,6 @@ export default function ReviewSystem2() {
       }
     };
   }, []);
-
-  const handlePrev = () => {
-    setCurrentIndex((i) => Math.max(i - 1, 0));
-  };
-
-  const handleNext = () => {
-    setCurrentIndex((i) => Math.min(i + 1, cards.length - 1));
-  };
-
-  const handleJumpToNextCard = () => {
-    if (firstUnansweredIndex >= 0) {
-      setCurrentIndex(firstUnansweredIndex);
-    }
-  };
 
   const handleEndReviewSession = () => {
     setEnded(true);
@@ -224,7 +205,7 @@ export default function ReviewSystem2() {
   if (!user) {
     return (
       <Container py="xl">
-        <Title order={2}>Please log in to access your review cards.</Title>
+        <Text fw={600}>Please log in to access your review cards.</Text>
       </Container>
     );
   }
@@ -232,7 +213,6 @@ export default function ReviewSystem2() {
   if (!cards.length) {
     return (
       <Container size="lg" py="xl" mt="40px">
-        <Title order={2}>Review</Title>
         <Text c="dimmed">No review cards due today.</Text>
       </Container>
     );
@@ -241,13 +221,7 @@ export default function ReviewSystem2() {
   if (ended) {
     return (
       <Container size="lg" py="xl">
-        <Title order={2}>Review Complete</Title>
-        <Text mt="sm">Total Cards: {totalCards}</Text>
-        <Text>Cards Reviewed: {reviewedCount}</Text>
         <Text>Cards Waiting: {waitingCount}</Text>
-        <Text c="dimmed" mt="sm">
-          Session ended locally. No session finalize API was called.
-        </Text>
         <Button mt="md" variant="default" onClick={() => setEnded(false)}>
           View Cards Again
         </Button>
@@ -269,95 +243,8 @@ export default function ReviewSystem2() {
 
   return (
     <Container size="lg" py="xl">
-      <Title order={2} mb="lg">
-        Review
-      </Title>
-
       <Stack gap="md">
-        <Group justify="space-between" align="flex-start" wrap="wrap">
-          <Stack gap={2}>
-            <Text fw={600}>Total Cards: {totalCards}</Text>
-            <Text fw={600}>Cards Reviewed: {reviewedCount}</Text>
-            <Text fw={600}>Cards Waiting: {waitingCount}</Text>
-          </Stack>
-
-          <Stack gap={2}>
-            <Text c="dimmed">
-              Card {currentIndex + 1} of {cards.length}
-            </Text>
-            <Text c="dimmed">Answered: {answeredCount}</Text>
-          </Stack>
-        </Group>
-
-        <Group justify="space-between" align="center" wrap="wrap">
-          <Group>
-            <Switch
-              label="Auto-continue"
-              checked={autoContinue}
-              onChange={(event) => setAutoContinue(event.currentTarget.checked)}
-            />
-          </Group>
-
-          <Text c="dimmed">Delay: {autoContinueDelayMs}ms</Text>
-        </Group>
-
-        <Slider
-          min={0}
-          max={2000}
-          step={100}
-          value={autoContinueDelayMs}
-          onChange={setAutoContinueDelayMs}
-          disabled={!autoContinue}
-          label={(value) => `${value}ms`}
-        />
-
-        <Group justify="space-between" align="center" wrap="wrap">
-          <Group>
-            <Button
-              variant="default"
-              onClick={handlePrev}
-              disabled={currentIndex === 0}
-            >
-              Previous
-            </Button>
-            <Button
-              variant="default"
-              onClick={handleNext}
-              disabled={currentIndex >= cards.length - 1}
-            >
-              Next
-            </Button>
-          </Group>
-
-          {firstUnansweredIndex >= 0 &&
-            currentIndex !== firstUnansweredIndex && (
-              <Button onClick={handleJumpToNextCard}>Jump to Next Card</Button>
-            )}
-        </Group>
-
-        <Group gap="xs" wrap="wrap">
-          {cards.map((card, index) => {
-            const state = answerStateById[card._id];
-            const locked = Boolean(state?.locked);
-            const active = index === currentIndex;
-
-            return (
-              <Button
-                key={card._id}
-                variant={active ? "filled" : "light"}
-                color={locked ? "gray" : "blue"}
-                onClick={() => setCurrentIndex(index)}
-                styles={{
-                  root: {
-                    opacity: locked ? 0.7 : 1,
-                  },
-                }}
-              >
-                {index + 1}
-              </Button>
-            );
-          })}
-        </Group>
+        <Text fw={700}>Cards Waiting: {waitingCount}</Text>
 
         <Center>
           <Card
@@ -435,10 +322,16 @@ export default function ReviewSystem2() {
                 </Text>
               )}
 
+              {isCurrentLocked && (
+                <Text fw={700} c={currentState?.isCorrect ? "green" : "red"}>
+                  {currentState?.isCorrect ? "Correct" : "Incorrect"}
+                </Text>
+              )}
+
               {isCurrentLocked && currentState?.syncStatus === "failed" && (
-                <Alert color="yellow" variant="light" title="Sync issue">
-                  Answer is locked for this session, but backend save failed.
-                </Alert>
+                <Text size="sm" c="yellow">
+                  Sync failed. Card remains locked for this session.
+                </Text>
               )}
             </Stack>
           </Card>
