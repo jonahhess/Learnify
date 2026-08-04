@@ -245,7 +245,7 @@ export default function ReviewSystem2() {
   return (
     <Container size="lg" py="xl">
       <Stack gap="md">
-        <Text fw={700}>Cards Waiting: {waitingCount}</Text>
+        <Text fw={700}>Cards Remaining: {waitingCount}</Text>
 
         <Center>
           <Card
