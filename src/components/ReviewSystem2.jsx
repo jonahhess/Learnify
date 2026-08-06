@@ -35,14 +35,14 @@ function nextUnansweredIndex(cards, answerStateById, fromIndex) {
 }
 
 export default function ReviewSystem2() {
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, reloadUser } = useAuth();
 
   const [answerStateById, setAnswerStateById] = useState({});
   const [currentIndex, setCurrentIndex] = useState(0);
   const [autoContinue, setAutoContinue] = useState(true);
   const [autoContinueDelayMs, setAutoContinueDelayMs] = useState(700);
   const [showAutoControls, setShowAutoControls] = useState(false);
-  const [ended, setEnded] = useState(false);
+  const [isRefreshingCards, setIsRefreshingCards] = useState(false);
   const autoContinueTimerRef = useRef(null);
 
   const cards = useMemo(() => {
@@ -89,6 +89,16 @@ export default function ReviewSystem2() {
   );
 
   const currentCard = cards[currentIndex] ?? null;
+  const failedCardIds = useMemo(
+    () =>
+      cards
+        .filter((card) => answerStateById[card._id]?.syncStatus === "failed")
+        .map((card) => card._id),
+    [cards, answerStateById],
+  );
+  const hasFailedSync = failedCardIds.length > 0;
+  const allAnswered = totalCards > 0 && answeredCount === totalCards;
+  const allSynced = allAnswered && waitingCount === 0 && !hasFailedSync;
 
   useEffect(() => {
     if (cards.length === 0) {
@@ -109,9 +119,26 @@ export default function ReviewSystem2() {
     };
   }, []);
 
-  const handleEndReviewSession = () => {
-    setEnded(true);
-  };
+  useEffect(() => {
+    if (!allSynced || isRefreshingCards) return;
+
+    let cancelled = false;
+
+    (async () => {
+      try {
+        setIsRefreshingCards(true);
+        await reloadUser();
+      } finally {
+        if (!cancelled) {
+          setIsRefreshingCards(false);
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [allSynced, isRefreshingCards, reloadUser]);
 
   const handleNextUnanswered = () => {
     setCurrentIndex((prevIndex) => {
@@ -201,6 +228,61 @@ export default function ReviewSystem2() {
     }
   };
 
+  const retryFailedSync = async () => {
+    if (!user?._id || failedCardIds.length === 0) return;
+
+    await Promise.all(
+      failedCardIds.map(async (cardId) => {
+        const state = answerStateById[cardId];
+        if (!state?.selectedAnswer) return;
+
+        setAnswerStateById((prev) => {
+          const existing = prev[cardId];
+          if (!existing) return prev;
+          return {
+            ...prev,
+            [cardId]: {
+              ...existing,
+              syncStatus: "pending",
+            },
+          };
+        });
+
+        try {
+          await submitReviewCardAnswer(user._id, {
+            _id: cardId,
+            selectedAnswer: state.selectedAnswer,
+          });
+
+          setAnswerStateById((prev) => {
+            const existing = prev[cardId];
+            if (!existing) return prev;
+            return {
+              ...prev,
+              [cardId]: {
+                ...existing,
+                syncStatus: "success",
+              },
+            };
+          });
+        } catch (err) {
+          console.error("Retry failed for review card:", err);
+          setAnswerStateById((prev) => {
+            const existing = prev[cardId];
+            if (!existing) return prev;
+            return {
+              ...prev,
+              [cardId]: {
+                ...existing,
+                syncStatus: "failed",
+              },
+            };
+          });
+        }
+      }),
+    );
+  };
+
   if (authLoading) {
     return (
       <Container size="lg" py="xl">
@@ -221,17 +303,6 @@ export default function ReviewSystem2() {
     return (
       <Container size="lg" py="xl" mt="40px">
         <Text c="dimmed">No review cards due today.</Text>
-      </Container>
-    );
-  }
-
-  if (ended) {
-    return (
-      <Container size="lg" py="xl">
-        <Text>Cards Waiting: {waitingCount}</Text>
-        <Button mt="md" variant="default" onClick={() => setEnded(false)}>
-          View Cards Again
-        </Button>
       </Container>
     );
   }
@@ -377,8 +448,34 @@ export default function ReviewSystem2() {
           </Card>
         </Center>
 
-        {answeredCount === totalCards && (
-          <Button onClick={handleEndReviewSession}>End Review Session</Button>
+        {allAnswered && waitingCount > 0 && (
+          <Text size="sm" c="dimmed">
+            Syncing {waitingCount} card{waitingCount === 1 ? "" : "s"}... Avoid
+            refreshing until sync completes.
+          </Text>
+        )}
+
+        {hasFailedSync && (
+          <Group>
+            <Text size="sm" c="yellow">
+              {failedCardIds.length} card{failedCardIds.length === 1 ? "" : "s"}{" "}
+              failed to sync.
+            </Text>
+            <Button
+              size="xs"
+              variant="light"
+              color="yellow"
+              onClick={retryFailedSync}
+            >
+              Retry Failed Sync
+            </Button>
+          </Group>
+        )}
+
+        {allSynced && isRefreshingCards && (
+          <Text size="sm" c="dimmed">
+            Finalizing review session...
+          </Text>
         )}
       </Stack>
     </Container>
