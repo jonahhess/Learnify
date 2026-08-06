@@ -1,9 +1,12 @@
 // ReviewCardAI.jsx
 import { Card, Text, Button, Group, Badge, Stack } from "@mantine/core";
 import { useState } from "react";
+import { deleteReviewCard } from "../api/reviewCard";
 
-export default function ReviewCard({ card, onAnswered }) {
+export default function ReviewCard({ card, onAnswered, onDeleted }) {
   const [correct, setCorrect] = useState(null);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
   const answered = correct !== null;
 
   const answers = [
@@ -17,14 +20,42 @@ export default function ReviewCard({ card, onAnswered }) {
     onAnswered?.({ questionId: card.question._id, success });
   };
 
+  const handleDelete = async () => {
+    if (!card?._id || deleting) return;
+
+    setDeleteError("");
+    setDeleting(true);
+    try {
+      await deleteReviewCard(card._id);
+      onDeleted?.({ cardId: card._id, questionId: card.question._id });
+    } catch (err) {
+      console.error("Failed to delete review card:", err);
+      setDeleteError("Could not delete this review card. Please try again.");
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   return (
     <Card shadow="sm" radius="md" withBorder>
       <Stack gap="sm">
         <Group justify="space-between">
           <Text fw={500}>{card.question.questionText}</Text>
-          <Badge color="blue">
-            {new Date(card.nextReviewDate).toLocaleDateString()}
-          </Badge>
+          <Group gap="xs">
+            <Badge color="blue">
+              {new Date(card.nextReviewDate).toLocaleDateString()}
+            </Badge>
+            <Button
+              size="compact-xs"
+              variant="subtle"
+              color="gray"
+              onClick={handleDelete}
+              loading={deleting}
+              aria-label="Delete review card"
+            >
+              Delete
+            </Button>
+          </Group>
         </Group>
 
         {!answered ? (
@@ -65,6 +96,12 @@ export default function ReviewCard({ card, onAnswered }) {
           <Text size="sm">Reviews: {card.reviews}</Text>
           <Text size="sm">Successes: {card.successes}</Text>
         </Group>
+
+        {deleteError ? (
+          <Text size="sm" c="red">
+            {deleteError}
+          </Text>
+        ) : null}
       </Stack>
     </Card>
   );
