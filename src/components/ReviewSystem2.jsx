@@ -15,6 +15,7 @@ import {
 } from "@mantine/core";
 import { useAuth } from "../context/useAuth.jsx";
 import { submitReviewCardAnswer } from "../api/users";
+import { deleteReviewCard } from "../api/reviewCard";
 
 function shuffleAnswers(answers) {
   return [...answers].sort(() => Math.random() - 0.5);
@@ -43,6 +44,8 @@ export default function ReviewSystem2() {
   const [autoContinueDelayMs, setAutoContinueDelayMs] = useState(700);
   const [showAutoControls, setShowAutoControls] = useState(false);
   const [isRefreshingCards, setIsRefreshingCards] = useState(false);
+  const [deletingCardId, setDeletingCardId] = useState(null);
+  const [deleteError, setDeleteError] = useState("");
   const autoContinueTimerRef = useRef(null);
 
   const cards = useMemo(() => {
@@ -283,6 +286,29 @@ export default function ReviewSystem2() {
     );
   };
 
+  const handleDeleteCurrent = async () => {
+    if (!currentCard?._id || deletingCardId) return;
+
+    const cardId = currentCard._id;
+
+    try {
+      setDeleteError("");
+      setDeletingCardId(cardId);
+      await deleteReviewCard(cardId);
+      setAnswerStateById((prev) => {
+        const next = { ...prev };
+        delete next[cardId];
+        return next;
+      });
+      await reloadUser();
+    } catch (err) {
+      console.error("Failed to delete review card:", err);
+      setDeleteError("Could not delete this review card. Please try again.");
+    } finally {
+      setDeletingCardId(null);
+    }
+  };
+
   if (authLoading) {
     return (
       <Container size="lg" py="xl">
@@ -377,9 +403,22 @@ export default function ReviewSystem2() {
             <Stack gap="sm">
               <Group justify="space-between" align="flex-start">
                 <Text fw={600}>{currentCard.question.questionText}</Text>
-                <Badge color="blue" variant="light">
-                  {new Date(currentCard.nextReviewDate).toLocaleDateString()}
-                </Badge>
+                <Group gap="xs" align="flex-start">
+                  <Badge color="blue" variant="light">
+                    {new Date(currentCard.nextReviewDate).toLocaleDateString()}
+                  </Badge>
+                  <Button
+                    size="compact-xs"
+                    variant="subtle"
+                    color="red"
+                    onClick={handleDeleteCurrent}
+                    loading={deletingCardId === currentCard._id}
+                    disabled={Boolean(deletingCardId)}
+                    aria-label="Delete review card"
+                  >
+                    Delete
+                  </Button>
+                </Group>
               </Group>
 
               <Stack>
@@ -470,6 +509,12 @@ export default function ReviewSystem2() {
               Retry Failed Sync
             </Button>
           </Group>
+        )}
+
+        {deleteError && (
+          <Text size="sm" c="red">
+            {deleteError}
+          </Text>
         )}
 
         {allSynced && isRefreshingCards && (
