@@ -48,7 +48,7 @@ export default function ReviewCard({ card, onAnswered, onDeleted }) {
             <Button
               size="compact-xs"
               variant="subtle"
-              color="gray"
+              color="red"
               onClick={handleDelete}
               loading={deleting}
               aria-label="Delete review card"
