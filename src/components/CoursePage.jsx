@@ -92,6 +92,13 @@ export default function CoursePage({ course, user, updateUser }) {
     return acc;
   }, {});
 
+  const nextAvailableCourseware =
+    availableCoursewares.find((cw) => statusById[getId(cw)] !== "completed") ||
+    null;
+  const nextAvailableCoursewareId = nextAvailableCourseware
+    ? getId(nextAvailableCourseware)
+    : "";
+
   function handleComplete(passed) {
     if (!passed) return;
     updateUser();
@@ -133,6 +140,24 @@ export default function CoursePage({ course, user, updateUser }) {
 
     setSelectedCourseware(courseware);
   }
+
+  useEffect(() => {
+    if (selectedCourseware) return;
+
+    requestAnimationFrame(() => {
+      if (nextAvailableCoursewareId) {
+        const target = document.querySelector(
+          `[data-courseware-id="${nextAvailableCoursewareId}"]`,
+        );
+        if (target) {
+          target.scrollIntoView({ block: "start" });
+          return;
+        }
+      }
+
+      window.scrollTo({ top: 0 });
+    });
+  }, [courseId, selectedCourseware, nextAvailableCoursewareId]);
 
   if (allCompleted) {
     return (

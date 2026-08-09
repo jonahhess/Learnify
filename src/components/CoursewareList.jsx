@@ -33,6 +33,7 @@ export default function CoursewareList({
         return (
           <Button
             key={cw._id || idx}
+            data-courseware-id={getId(cw)}
             fullWidth
             color={color}
             variant="light"
